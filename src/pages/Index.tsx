@@ -2,9 +2,14 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Card } from "@/components/ui/card";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Loader2, FileDown, Sparkles } from "lucide-react";
-import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import jsPDF from "jspdf";
 
@@ -12,7 +17,7 @@ const Index = () => {
   const [jobInfo, setJobInfo] = useState("");
   const [resume, setResume] = useState("");
   const [isGenerating, setIsGenerating] = useState(false);
-  const [aiProvider, setAiProvider] = useState<"lovable" | "openai">("lovable");
+  const [aiProvider, setAiProvider] = useState<"gemini" | "openai">("gemini");
 
   const handleGenerate = async () => {
     if (!jobInfo.trim()) {
@@ -22,21 +27,27 @@ const Index = () => {
 
     setIsGenerating(true);
     try {
-      const { data, error } = await supabase.functions.invoke('generate-resume', {
-        body: { jobInfo, aiProvider }
-      });
+      const response = await fetch(
+        "http://localhost:3001/api/generate-resume",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ jobInfo, aiProvider }),
+        }
+      );
 
-      if (error) throw error;
-
-      if (data?.error) {
-        toast.error(data.error);
-        return;
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || "Failed to generate resume");
       }
 
+      const data = await response.json();
       setResume(data.resume);
       toast.success("Resume generated successfully!");
     } catch (error: any) {
-      console.error('Error generating resume:', error);
+      console.error("Error generating resume:", error);
       toast.error(error.message || "Failed to generate resume");
     } finally {
       setIsGenerating(false);
@@ -54,14 +65,14 @@ const Index = () => {
       const pageWidth = doc.internal.pageSize.getWidth();
       const pageHeight = doc.internal.pageSize.getHeight();
       const margin = 20;
-      const maxWidth = pageWidth - (margin * 2);
-      
+      const maxWidth = pageWidth - margin * 2;
+
       // Split resume into lines
       const lines = doc.splitTextToSize(resume, maxWidth);
-      
+
       let y = margin;
       const lineHeight = 7;
-      
+
       lines.forEach((line: string, index: number) => {
         if (y + lineHeight > pageHeight - margin) {
           doc.addPage();
@@ -74,7 +85,7 @@ const Index = () => {
       doc.save("resume.pdf");
       toast.success("PDF downloaded successfully!");
     } catch (error) {
-      console.error('Error generating PDF:', error);
+      console.error("Error generating PDF:", error);
       toast.error("Failed to download PDF");
     }
   };
@@ -86,7 +97,9 @@ const Index = () => {
         <div className="text-center mb-12 space-y-4">
           <div className="inline-flex items-center gap-2 px-4 py-2 bg-primary/10 rounded-full mb-4">
             <Sparkles className="w-5 h-5 text-primary" />
-            <span className="text-sm font-semibold text-primary tracking-wide">TalentEdge-AI</span>
+            <span className="text-sm font-semibold text-primary tracking-wide">
+              TalentEdge-AI
+            </span>
           </div>
           <h1 className="text-5xl md:text-6xl font-bold text-foreground">
             Transform Your Experience into a{" "}
@@ -95,14 +108,17 @@ const Index = () => {
             </span>
           </h1>
           <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
-            Paste your unorganized job details and let AI create an ATS-friendly, Harvard-format resume in seconds
+            Paste your unorganized job details and let AI create an
+            ATS-friendly, Harvard-format resume in seconds
           </p>
         </div>
 
         {/* Input Section */}
         <div className="grid lg:grid-cols-2 gap-8 mb-8">
           <Card className="p-6 border bg-card">
-            <h2 className="text-2xl font-semibold mb-4 text-foreground">Your Job Information</h2>
+            <h2 className="text-2xl font-semibold mb-4 text-foreground">
+              Your Job Information
+            </h2>
             <Textarea
               placeholder="Paste or type your job details here...&#10;&#10;Example: I admined 16 repositories in GitHub. I supported 3 applications providing technical assistance..."
               value={jobInfo}
@@ -111,14 +127,23 @@ const Index = () => {
             />
             <div className="mt-6 space-y-4">
               <div>
-                <label className="text-sm font-medium text-foreground mb-2 block">AI Provider</label>
-                <Select value={aiProvider} onValueChange={(value: "lovable" | "openai") => setAiProvider(value)}>
+                <label className="text-sm font-medium text-foreground mb-2 block">
+                  AI Provider
+                </label>
+                <Select
+                  value={aiProvider}
+                  onValueChange={(value: "gemini" | "openai") =>
+                    setAiProvider(value)
+                  }
+                >
                   <SelectTrigger className="w-full bg-background">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent className="bg-popover border-border">
-                    <SelectItem value="lovable">Lovable AI (Gemini 2.5)</SelectItem>
-                    <SelectItem value="openai">OpenAI (GPT-5)</SelectItem>
+                    <SelectItem value="gemini">
+                      Google Gemini 2.0 Flash
+                    </SelectItem>
+                    <SelectItem value="openai">OpenAI (GPT-4o)</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -144,9 +169,11 @@ const Index = () => {
           </Card>
 
           {/* Preview Section */}
-          <Card className="p-6 border bg-card">
+          <Card className="p-6 border bg-card flex flex-col h-full">
             <div className="flex items-center justify-between mb-4">
-              <h2 className="text-2xl font-semibold text-foreground">Resume Preview</h2>
+              <h2 className="text-2xl font-semibold text-foreground">
+                Resume Preview
+              </h2>
               {resume && (
                 <Button
                   onClick={handleDownloadPDF}
@@ -158,7 +185,7 @@ const Index = () => {
                 </Button>
               )}
             </div>
-            <div className="min-h-[400px] bg-muted/30 rounded-lg p-6 border border-border overflow-auto">
+            <div className="flex-1 bg-muted/30 rounded-lg p-6 border border-border overflow-y-auto">
               {resume ? (
                 <pre className="whitespace-pre-wrap font-mono text-sm text-foreground leading-relaxed">
                   {resume}
@@ -181,24 +208,46 @@ const Index = () => {
             <div className="w-14 h-14 bg-primary/10 rounded-2xl flex items-center justify-center mx-auto mb-4">
               <Sparkles className="w-7 h-7 text-primary" />
             </div>
-            <h3 className="font-semibold mb-2 text-foreground text-lg">AI-Powered</h3>
-            <p className="text-sm text-muted-foreground">Advanced AI transforms your raw data into polished content</p>
+            <h3 className="font-semibold mb-2 text-foreground text-lg">
+              AI-Powered
+            </h3>
+            <p className="text-sm text-muted-foreground">
+              Advanced AI transforms your raw data into polished content
+            </p>
           </Card>
           <Card className="p-6 text-center border bg-card hover:border-secondary/30 transition-smooth">
             <div className="w-14 h-14 bg-secondary/10 rounded-2xl flex items-center justify-center mx-auto mb-4">
-              <svg className="w-7 h-7 text-secondary" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+              <svg
+                className="w-7 h-7 text-secondary"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
+                />
               </svg>
             </div>
-            <h3 className="font-semibold mb-2 text-foreground text-lg">ATS-Friendly</h3>
-            <p className="text-sm text-muted-foreground">Optimized to pass Applicant Tracking Systems</p>
+            <h3 className="font-semibold mb-2 text-foreground text-lg">
+              ATS-Friendly
+            </h3>
+            <p className="text-sm text-muted-foreground">
+              Optimized to pass Applicant Tracking Systems
+            </p>
           </Card>
           <Card className="p-6 text-center border bg-card hover:border-primary/30 transition-smooth">
             <div className="w-14 h-14 bg-primary/10 rounded-2xl flex items-center justify-center mx-auto mb-4">
               <FileDown className="w-7 h-7 text-primary" />
             </div>
-            <h3 className="font-semibold mb-2 text-foreground text-lg">Instant Download</h3>
-            <p className="text-sm text-muted-foreground">Export your resume as PDF with one click</p>
+            <h3 className="font-semibold mb-2 text-foreground text-lg">
+              Instant Download
+            </h3>
+            <p className="text-sm text-muted-foreground">
+              Export your resume as PDF with one click
+            </p>
           </Card>
         </div>
       </div>
