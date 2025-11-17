@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Card } from "@/components/ui/card";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Loader2, FileDown, Sparkles } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -11,6 +12,7 @@ const Index = () => {
   const [jobInfo, setJobInfo] = useState("");
   const [resume, setResume] = useState("");
   const [isGenerating, setIsGenerating] = useState(false);
+  const [aiProvider, setAiProvider] = useState<"lovable" | "openai">("lovable");
 
   const handleGenerate = async () => {
     if (!jobInfo.trim()) {
@@ -21,7 +23,7 @@ const Index = () => {
     setIsGenerating(true);
     try {
       const { data, error } = await supabase.functions.invoke('generate-resume', {
-        body: { jobInfo }
+        body: { jobInfo, aiProvider }
       });
 
       if (error) throw error;
@@ -107,24 +109,38 @@ const Index = () => {
               onChange={(e) => setJobInfo(e.target.value)}
               className="min-h-[400px] resize-none text-base border-input focus:border-primary transition-smooth"
             />
-            <Button
-              onClick={handleGenerate}
-              disabled={isGenerating || !jobInfo.trim()}
-              className="w-full mt-6 h-12 text-base font-semibold transition-smooth bg-gradient-primary hover:opacity-90"
-              size="lg"
-            >
-              {isGenerating ? (
-                <>
-                  <Loader2 className="mr-2 h-5 w-5 animate-spin" />
-                  Generating Resume...
-                </>
-              ) : (
-                <>
-                  <Sparkles className="mr-2 h-5 w-5" />
-                  Generate Resume
-                </>
-              )}
-            </Button>
+            <div className="mt-6 space-y-4">
+              <div>
+                <label className="text-sm font-medium text-foreground mb-2 block">AI Provider</label>
+                <Select value={aiProvider} onValueChange={(value: "lovable" | "openai") => setAiProvider(value)}>
+                  <SelectTrigger className="w-full bg-background">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent className="bg-popover border-border">
+                    <SelectItem value="lovable">Lovable AI (Gemini 2.5)</SelectItem>
+                    <SelectItem value="openai">OpenAI (GPT-5)</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <Button
+                onClick={handleGenerate}
+                disabled={isGenerating || !jobInfo.trim()}
+                className="w-full h-12 text-base font-semibold transition-smooth bg-gradient-primary hover:opacity-90"
+                size="lg"
+              >
+                {isGenerating ? (
+                  <>
+                    <Loader2 className="mr-2 h-5 w-5 animate-spin" />
+                    Generating Resume...
+                  </>
+                ) : (
+                  <>
+                    <Sparkles className="mr-2 h-5 w-5" />
+                    Generate Resume
+                  </>
+                )}
+              </Button>
+            </div>
           </Card>
 
           {/* Preview Section */}
