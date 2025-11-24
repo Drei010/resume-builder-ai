@@ -4,6 +4,10 @@
   "outputDirectory": "dist",
   "routes": [
     {
+      "src": "/api/.*",
+      "dest": "/api/generate-resume.js"
+    },
+    {
       "src": "/(.*)",
       "dest": "/index.html",
       "status": 200
