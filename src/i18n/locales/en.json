@@ -59,10 +59,5 @@
     "downloadDocx": "Word document downloaded successfully!",
     "downloadTxt": "Text file downloaded successfully!",
     "downloadError": "Failed to download resume"
-  },
-  "notFound": {
-    "title": "404",
-    "message": "Oops! Page not found",
-    "returnHome": "Return to Home"
   }
 }

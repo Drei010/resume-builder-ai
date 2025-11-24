@@ -41,7 +41,7 @@ const Index = () => {
 
   const handleGenerate = async () => {
     if (!jobInfo.trim()) {
-      toast.error(t("messages.noJobInfo"));
+      toast.error("Please enter your job information");
       return;
     }
 
@@ -57,15 +57,15 @@ const Index = () => {
 
       if (!response.ok) {
         const errorData = await response.json();
-        throw new Error(errorData.error || t("messages.error"));
+        throw new Error(errorData.error || "Failed to generate resume");
       }
 
       const data = await response.json();
       setResume(data.resume);
-      toast.success(t("messages.success"));
+      toast.success("Resume generated successfully!");
     } catch (error: any) {
       console.error("Error generating resume:", error);
-      toast.error(error.message || t("messages.error"));
+      toast.error(error.message || "Failed to generate resume");
     } finally {
       setIsGenerating(false);
     }
@@ -73,11 +73,16 @@ const Index = () => {
 
   const handleAddMoreDetails = () => {
     setResume("");
+    // Focus back on job info textarea
+    const textarea = document.querySelector(
+      'textarea[placeholder*="Paste or type"]'
+    ) as HTMLTextAreaElement;
+    if (textarea) textarea.focus();
   };
 
   const handleRegenerateResume = async () => {
     if (!jobInfo.trim()) {
-      toast.error(t("messages.noJobInfo"));
+      toast.error("Please enter your job information");
       return;
     }
 
@@ -93,15 +98,15 @@ const Index = () => {
 
       if (!response.ok) {
         const errorData = await response.json();
-        throw new Error(errorData.error || t("messages.regenerateError"));
+        throw new Error(errorData.error || "Failed to generate resume");
       }
 
       const data = await response.json();
       setResume(data.resume);
-      toast.success(t("messages.regenerateSuccess"));
+      toast.success("Resume regenerated successfully!");
     } catch (error: any) {
       console.error("Error regenerating resume:", error);
-      toast.error(error.message || t("messages.regenerateError"));
+      toast.error(error.message || "Failed to regenerate resume");
     } finally {
       setIsGenerating(false);
     }
@@ -109,7 +114,7 @@ const Index = () => {
 
   const handleDownload = async () => {
     if (!resume) {
-      toast.error(t("messages.noResume"));
+      toast.error("No resume to download");
       return;
     }
 
@@ -123,7 +128,7 @@ const Index = () => {
       }
     } catch (error) {
       console.error("Error downloading resume:", error);
-      toast.error(t("messages.downloadError"));
+      toast.error("Failed to download resume");
     }
   };
 
@@ -149,7 +154,7 @@ const Index = () => {
       });
 
       doc.save("resume.pdf");
-      toast.success(t("messages.downloadPdf"));
+      toast.success("PDF downloaded successfully!");
     } catch (error) {
       console.error("Error generating PDF:", error);
       throw error;
@@ -162,7 +167,7 @@ const Index = () => {
       const doc = new Document({ sections: [{ children: paragraphs }] });
       const blob = await Packer.toBlob(doc);
       saveAs(blob, "resume.docx");
-      toast.success(t("messages.downloadDocx"));
+      toast.success("Word document downloaded successfully!");
     } catch (error) {
       console.error("Error generating DOCX:", error);
       throw error;
@@ -173,7 +178,7 @@ const Index = () => {
     try {
       const blob = new Blob([resume], { type: "text/plain" });
       saveAs(blob, "resume.txt");
-      toast.success(t("messages.downloadTxt"));
+      toast.success("Text file downloaded successfully!");
     } catch (error) {
       console.error("Error generating TXT:", error);
       throw error;
@@ -204,17 +209,18 @@ const Index = () => {
           <div className="inline-flex items-center gap-2 px-4 py-2 bg-primary/10 rounded-full mb-4">
             <Sparkles className="w-5 h-5 text-primary" />
             <span className="text-sm font-semibold text-primary tracking-wide">
-              {t("landing.logo")}
+              TalentEdge-AI
             </span>
           </div>
           <h1 className="text-5xl md:text-6xl font-bold text-foreground">
-            {t("landing.title")}{" "}
+            Transform Your Experience into a{" "}
             <span className="bg-gradient-primary bg-clip-text text-transparent">
-              {t("landing.highlight")}
+              Standout Resume
             </span>
           </h1>
           <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
-            {t("landing.description")}
+            Paste your unorganized job details and let AI create an
+            ATS-friendly, Harvard-format resume in seconds
           </p>
         </div>
 
@@ -222,10 +228,10 @@ const Index = () => {
         <div className="grid lg:grid-cols-2 gap-8 mb-8">
           <Card className="p-6 border bg-card">
             <h2 className="text-2xl font-semibold mb-4 text-foreground">
-              {t("input.label")}
+              Your Job Information
             </h2>
             <Textarea
-              placeholder={t("input.placeholder")}
+              placeholder="Paste or type your job details here...&#10;&#10;Example: I admined 16 repositories in GitHub. I supported 3 applications providing technical assistance..."
               value={jobInfo}
               onChange={(e) => setJobInfo(e.target.value)}
               className="min-h-[400px] resize-none text-base border-input focus:border-primary transition-smooth"
@@ -233,7 +239,7 @@ const Index = () => {
             <div className="mt-6 space-y-4">
               <div>
                 <label className="text-sm font-medium text-foreground mb-2 block">
-                  {t("input.provider")}
+                  AI Provider
                 </label>
                 <Select
                   value={aiProvider}
@@ -245,8 +251,10 @@ const Index = () => {
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent className="bg-popover border-border">
-                    <SelectItem value="openai">{t("input.openai")}</SelectItem>
-                    <SelectItem value="gemini">{t("input.gemini")}</SelectItem>
+                    <SelectItem value="openai">OpenAI (GPT-4o)</SelectItem>
+                    <SelectItem value="gemini">
+                      Google Gemini 2.0 Flash
+                    </SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -260,12 +268,12 @@ const Index = () => {
                   {isGenerating ? (
                     <>
                       <Loader2 className="mr-2 h-5 w-5 animate-spin" />
-                      {t("input.generatingBtn")}
+                      Generating Resume...
                     </>
                   ) : (
                     <>
                       <Sparkles className="mr-2 h-5 w-5" />
-                      {t("input.generateBtn")}
+                      Generate Resume
                     </>
                   )}
                 </Button>
@@ -280,12 +288,12 @@ const Index = () => {
                     {isGenerating ? (
                       <>
                         <Loader2 className="mr-2 h-5 w-5 animate-spin" />
-                        {t("input.regeneratingBtn")}
+                        Regenerating...
                       </>
                     ) : (
                       <>
                         <Sparkles className="mr-2 h-5 w-5" />
-                        {t("input.regenerateBtn")}
+                        Regenerate Resume
                       </>
                     )}
                   </Button>
@@ -296,7 +304,7 @@ const Index = () => {
                     className="w-full h-12 text-base font-semibold transition-smooth border-border hover:bg-secondary/20"
                     size="lg"
                   >
-                    {t("input.addDetailsBtn")}
+                    Add More Details
                   </Button>
                 </div>
               )}
@@ -307,7 +315,7 @@ const Index = () => {
           <Card className="p-6 border bg-card flex flex-col h-full">
             <div className="flex items-center justify-between mb-4">
               <h2 className="text-2xl font-semibold text-foreground">
-                {t("preview.label")}
+                Resume Preview
               </h2>
               {resume && (
                 <div className="flex gap-2">
@@ -319,15 +327,9 @@ const Index = () => {
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent className="bg-popover border-border">
-                      <SelectItem value="pdf">
-                        {t("preview.format.pdf")}
-                      </SelectItem>
-                      <SelectItem value="docx">
-                        {t("preview.format.docx")}
-                      </SelectItem>
-                      <SelectItem value="txt">
-                        {t("preview.format.txt")}
-                      </SelectItem>
+                      <SelectItem value="pdf">PDF</SelectItem>
+                      <SelectItem value="docx">Word (.docx)</SelectItem>
+                      <SelectItem value="txt">Text (.txt)</SelectItem>
                     </SelectContent>
                   </Select>
                   <Button
@@ -336,7 +338,7 @@ const Index = () => {
                     className="gap-2 border-border hover:bg-secondary/20 transition-smooth"
                   >
                     <FileDown className="h-4 w-4" />
-                    {t("preview.downloadBtn")}
+                    Download
                   </Button>
                 </div>
               )}
@@ -352,7 +354,7 @@ const Index = () => {
                 <div className="h-full flex items-center justify-center text-muted-foreground">
                   <div className="text-center space-y-2">
                     <Sparkles className="w-12 h-12 mx-auto opacity-20" />
-                    <p>{t("preview.placeholder")}</p>
+                    <p>Your AI-generated resume will appear here</p>
                   </div>
                 </div>
               )}
@@ -367,10 +369,10 @@ const Index = () => {
               <Sparkles className="w-7 h-7 text-primary" />
             </div>
             <h3 className="font-semibold mb-2 text-foreground text-lg">
-              {t("features.aiPowered.title")}
+              AI-Powered
             </h3>
             <p className="text-sm text-muted-foreground">
-              {t("features.aiPowered.description")}
+              Advanced AI transforms your raw data into polished content
             </p>
           </Card>
           <Card className="p-6 text-center border bg-card hover:border-secondary/30 transition-smooth">
@@ -390,10 +392,10 @@ const Index = () => {
               </svg>
             </div>
             <h3 className="font-semibold mb-2 text-foreground text-lg">
-              {t("features.atsFriendly.title")}
+              ATS-Friendly
             </h3>
             <p className="text-sm text-muted-foreground">
-              {t("features.atsFriendly.description")}
+              Optimized to pass Applicant Tracking Systems
             </p>
           </Card>
           <Card className="p-6 text-center border bg-card hover:border-primary/30 transition-smooth">
@@ -401,10 +403,10 @@ const Index = () => {
               <FileDown className="w-7 h-7 text-primary" />
             </div>
             <h3 className="font-semibold mb-2 text-foreground text-lg">
-              {t("features.instantDownload.title")}
+              Instant Download
             </h3>
             <p className="text-sm text-muted-foreground">
-              {t("features.instantDownload.description")}
+              Export your resume as PDF with one click
             </p>
           </Card>
         </div>
