@@ -12,12 +12,17 @@ import {
 import { Loader2, FileDown, Sparkles } from "lucide-react";
 import { toast } from "sonner";
 import jsPDF from "jspdf";
+import { Document, Packer, Paragraph } from "docx";
+import { saveAs } from "file-saver";
 
 const Index = () => {
   const [jobInfo, setJobInfo] = useState("");
   const [resume, setResume] = useState("");
   const [isGenerating, setIsGenerating] = useState(false);
   const [aiProvider, setAiProvider] = useState<"gemini" | "openai">("gemini");
+  const [downloadFormat, setDownloadFormat] = useState<"pdf" | "docx" | "txt">(
+    "pdf"
+  );
 
   const handleGenerate = async () => {
     if (!jobInfo.trim()) {
@@ -54,12 +59,71 @@ const Index = () => {
     }
   };
 
-  const handleDownloadPDF = () => {
+  const handleAddMoreDetails = () => {
+    setResume("");
+    // Focus back on job info textarea
+    const textarea = document.querySelector(
+      'textarea[placeholder*="Paste or type"]'
+    ) as HTMLTextAreaElement;
+    if (textarea) textarea.focus();
+  };
+
+  const handleRegenerateResume = async () => {
+    if (!jobInfo.trim()) {
+      toast.error("Please enter your job information");
+      return;
+    }
+
+    setIsGenerating(true);
+    try {
+      const response = await fetch(
+        "http://localhost:3001/api/generate-resume",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ jobInfo, aiProvider }),
+        }
+      );
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || "Failed to generate resume");
+      }
+
+      const data = await response.json();
+      setResume(data.resume);
+      toast.success("Resume regenerated successfully!");
+    } catch (error: any) {
+      console.error("Error regenerating resume:", error);
+      toast.error(error.message || "Failed to regenerate resume");
+    } finally {
+      setIsGenerating(false);
+    }
+  };
+
+  const handleDownload = async () => {
     if (!resume) {
       toast.error("No resume to download");
       return;
     }
 
+    try {
+      if (downloadFormat === "pdf") {
+        downloadPDF();
+      } else if (downloadFormat === "docx") {
+        await downloadDocx();
+      } else if (downloadFormat === "txt") {
+        downloadTxt();
+      }
+    } catch (error) {
+      console.error("Error downloading resume:", error);
+      toast.error("Failed to download resume");
+    }
+  };
+
+  const downloadPDF = () => {
     try {
       const doc = new jsPDF();
       const pageWidth = doc.internal.pageSize.getWidth();
@@ -67,13 +131,11 @@ const Index = () => {
       const margin = 20;
       const maxWidth = pageWidth - margin * 2;
 
-      // Split resume into lines
       const lines = doc.splitTextToSize(resume, maxWidth);
-
       let y = margin;
       const lineHeight = 7;
 
-      lines.forEach((line: string, index: number) => {
+      lines.forEach((line: string) => {
         if (y + lineHeight > pageHeight - margin) {
           doc.addPage();
           y = margin;
@@ -86,7 +148,31 @@ const Index = () => {
       toast.success("PDF downloaded successfully!");
     } catch (error) {
       console.error("Error generating PDF:", error);
-      toast.error("Failed to download PDF");
+      throw error;
+    }
+  };
+
+  const downloadDocx = async () => {
+    try {
+      const paragraphs = resume.split("\n").map((line) => new Paragraph(line));
+      const doc = new Document({ sections: [{ children: paragraphs }] });
+      const blob = await Packer.toBlob(doc);
+      saveAs(blob, "resume.docx");
+      toast.success("Word document downloaded successfully!");
+    } catch (error) {
+      console.error("Error generating DOCX:", error);
+      throw error;
+    }
+  };
+
+  const downloadTxt = () => {
+    try {
+      const blob = new Blob([resume], { type: "text/plain" });
+      saveAs(blob, "resume.txt");
+      toast.success("Text file downloaded successfully!");
+    } catch (error) {
+      console.error("Error generating TXT:", error);
+      throw error;
     }
   };
 
@@ -147,24 +233,56 @@ const Index = () => {
                   </SelectContent>
                 </Select>
               </div>
-              <Button
-                onClick={handleGenerate}
-                disabled={isGenerating || !jobInfo.trim()}
-                className="w-full h-12 text-base font-semibold transition-smooth bg-gradient-primary hover:opacity-90"
-                size="lg"
-              >
-                {isGenerating ? (
-                  <>
-                    <Loader2 className="mr-2 h-5 w-5 animate-spin" />
-                    Generating Resume...
-                  </>
-                ) : (
-                  <>
-                    <Sparkles className="mr-2 h-5 w-5" />
-                    Generate Resume
-                  </>
-                )}
-              </Button>
+              {!resume ? (
+                <Button
+                  onClick={handleGenerate}
+                  disabled={isGenerating || !jobInfo.trim()}
+                  className="w-full h-12 text-base font-semibold transition-smooth bg-gradient-primary hover:opacity-90"
+                  size="lg"
+                >
+                  {isGenerating ? (
+                    <>
+                      <Loader2 className="mr-2 h-5 w-5 animate-spin" />
+                      Generating Resume...
+                    </>
+                  ) : (
+                    <>
+                      <Sparkles className="mr-2 h-5 w-5" />
+                      Generate Resume
+                    </>
+                  )}
+                </Button>
+              ) : (
+                <div className="space-y-3">
+                  <Button
+                    onClick={handleRegenerateResume}
+                    disabled={isGenerating || !jobInfo.trim()}
+                    className="w-full h-12 text-base font-semibold transition-smooth bg-gradient-primary hover:opacity-90"
+                    size="lg"
+                  >
+                    {isGenerating ? (
+                      <>
+                        <Loader2 className="mr-2 h-5 w-5 animate-spin" />
+                        Regenerating...
+                      </>
+                    ) : (
+                      <>
+                        <Sparkles className="mr-2 h-5 w-5" />
+                        Regenerate Resume
+                      </>
+                    )}
+                  </Button>
+                  <Button
+                    onClick={handleAddMoreDetails}
+                    disabled={isGenerating}
+                    variant="outline"
+                    className="w-full h-12 text-base font-semibold transition-smooth border-border hover:bg-secondary/20"
+                    size="lg"
+                  >
+                    Add More Details
+                  </Button>
+                </div>
+              )}
             </div>
           </Card>
 
@@ -175,21 +293,38 @@ const Index = () => {
                 Resume Preview
               </h2>
               {resume && (
-                <Button
-                  onClick={handleDownloadPDF}
-                  variant="outline"
-                  className="gap-2 border-border hover:bg-secondary/20 transition-smooth"
-                >
-                  <FileDown className="h-4 w-4" />
-                  Download PDF
-                </Button>
+                <div className="flex gap-2">
+                  <Select
+                    value={downloadFormat}
+                    onValueChange={(value: any) => setDownloadFormat(value)}
+                  >
+                    <SelectTrigger className="w-40 bg-background">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent className="bg-popover border-border">
+                      <SelectItem value="pdf">PDF</SelectItem>
+                      <SelectItem value="docx">Word (.docx)</SelectItem>
+                      <SelectItem value="txt">Text (.txt)</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  <Button
+                    onClick={handleDownload}
+                    variant="outline"
+                    className="gap-2 border-border hover:bg-secondary/20 transition-smooth"
+                  >
+                    <FileDown className="h-4 w-4" />
+                    Download
+                  </Button>
+                </div>
               )}
             </div>
             <div className="flex-1 bg-muted/30 rounded-lg p-6 border border-border overflow-y-auto">
               {resume ? (
-                <pre className="whitespace-pre-wrap font-mono text-sm text-foreground leading-relaxed">
-                  {resume}
-                </pre>
+                <Textarea
+                  value={resume}
+                  onChange={(e) => setResume(e.target.value)}
+                  className="h-full resize-none border-0 bg-transparent p-0 text-sm font-mono text-foreground focus:ring-0"
+                />
               ) : (
                 <div className="h-full flex items-center justify-center text-muted-foreground">
                   <div className="text-center space-y-2">
