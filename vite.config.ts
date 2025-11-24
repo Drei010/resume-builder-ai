@@ -24,4 +24,5 @@ export default defineConfig(({ mode }) => ({
       "@": path.resolve(__dirname, "./src"),
     },
   },
+  base: process.env.VITE_BASE_PATH || "/resume-builder-ai",
 }));
