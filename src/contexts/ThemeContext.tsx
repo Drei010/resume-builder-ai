@@ -9,18 +9,23 @@ interface ThemeContextType {
 
 const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
 
+// Determine theme based on time of day
+const getThemeByTime = (): Theme => {
+  const hour = new Date().getHours();
+  // Light theme during day (6 AM to 6 PM), dark theme at night (6 PM to 6 AM)
+  return hour >= 6 && hour < 18 ? "light" : "dark";
+};
+
 export const ThemeProvider = ({ children }: { children: React.ReactNode }) => {
   const [theme, setTheme] = useState<Theme>("light");
   const [mounted, setMounted] = useState(false);
 
-  // Load theme from localStorage on mount
+  // Load theme from localStorage on mount, fallback to time-based theme
   useEffect(() => {
     const savedTheme = localStorage.getItem("theme") as Theme | null;
-    const prefersDark = window.matchMedia(
-      "(prefers-color-scheme: dark)"
-    ).matches;
 
-    const initialTheme = savedTheme || (prefersDark ? "dark" : "light");
+    // If no saved theme, use time-based theme
+    const initialTheme = savedTheme || getThemeByTime();
     setTheme(initialTheme);
     applyTheme(initialTheme);
     setMounted(true);

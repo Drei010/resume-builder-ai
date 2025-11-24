@@ -32,7 +32,7 @@ const Index = () => {
   const [jobInfo, setJobInfo] = useState("");
   const [resume, setResume] = useState("");
   const [isGenerating, setIsGenerating] = useState(false);
-  const [aiProvider, setAiProvider] = useState<"gemini" | "openai">("gemini");
+  const [aiProvider, setAiProvider] = useState<"gemini" | "openai">("openai");
   const [downloadFormat, setDownloadFormat] = useState<"pdf" | "docx" | "txt">(
     "pdf"
   );
@@ -247,7 +247,7 @@ const Index = () => {
                 </label>
                 <Select
                   value={aiProvider}
-                  onValueChange={(value: "gemini" | "openai") =>
+                  onValueChange={(value: "openai" | "gemini") =>
                     setAiProvider(value)
                   }
                 >
@@ -255,10 +255,10 @@ const Index = () => {
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent className="bg-popover border-border">
+                    <SelectItem value="openai">OpenAI (GPT-4o)</SelectItem>
                     <SelectItem value="gemini">
                       Google Gemini 2.0 Flash
                     </SelectItem>
-                    <SelectItem value="openai">OpenAI (GPT-4o)</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
