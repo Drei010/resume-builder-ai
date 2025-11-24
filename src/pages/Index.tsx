@@ -22,6 +22,8 @@ import {
 import { toast } from "sonner";
 import { useTheme } from "@/contexts/ThemeContext";
 import { useTranslation } from "react-i18next";
+import { SOCIAL_LINKS } from "@/lib/constants";
+import { API_ENDPOINTS } from "@/lib/api-config";
 import jsPDF from "jspdf";
 import { Document, Packer, Paragraph } from "docx";
 import { saveAs } from "file-saver";
@@ -45,16 +47,13 @@ const Index = () => {
 
     setIsGenerating(true);
     try {
-      const response = await fetch(
-        "http://localhost:3001/api/generate-resume",
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({ jobInfo, aiProvider }),
-        }
-      );
+      const response = await fetch(API_ENDPOINTS.generateResume, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ jobInfo, aiProvider }),
+      });
 
       if (!response.ok) {
         const errorData = await response.json();
@@ -89,16 +88,13 @@ const Index = () => {
 
     setIsGenerating(true);
     try {
-      const response = await fetch(
-        "http://localhost:3001/api/generate-resume",
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({ jobInfo, aiProvider }),
-        }
-      );
+      const response = await fetch(API_ENDPOINTS.generateResume, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ jobInfo, aiProvider }),
+      });
 
       if (!response.ok) {
         const errorData = await response.json();
@@ -419,7 +415,7 @@ const Index = () => {
         <div className="mt-16 pt-8 border-t border-border">
           <div className="flex justify-center gap-6">
             <a
-              href="https://linkedin.com"
+              href={SOCIAL_LINKS.linkedin}
               target="_blank"
               rel="noopener noreferrer"
               className="inline-flex items-center justify-center w-12 h-12 rounded-full bg-primary/10 text-primary hover:bg-primary hover:text-primary-foreground transition-all duration-300"
@@ -428,7 +424,7 @@ const Index = () => {
               <Linkedin className="w-6 h-6" />
             </a>
             <a
-              href="https://github.com"
+              href={SOCIAL_LINKS.github}
               target="_blank"
               rel="noopener noreferrer"
               className="inline-flex items-center justify-center w-12 h-12 rounded-full bg-primary/10 text-primary hover:bg-primary hover:text-primary-foreground transition-all duration-300"
@@ -437,7 +433,7 @@ const Index = () => {
               <Github className="w-6 h-6" />
             </a>
             <a
-              href="mailto:contact@example.com"
+              href={`mailto:${SOCIAL_LINKS.email}`}
               className="inline-flex items-center justify-center w-12 h-12 rounded-full bg-primary/10 text-primary hover:bg-primary hover:text-primary-foreground transition-all duration-300"
               aria-label="Email"
             >
