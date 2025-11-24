@@ -59,5 +59,10 @@
     "downloadDocx": "¡Documento de Word descargado exitosamente!",
     "downloadTxt": "¡Archivo de texto descargado exitosamente!",
     "downloadError": "No se pudo descargar el currículum"
+  },
+  "notFound": {
+    "title": "404",
+    "message": "¡Oops! Página no encontrada",
+    "returnHome": "Volver al Inicio"
   }
 }
