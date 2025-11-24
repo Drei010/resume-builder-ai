@@ -2,16 +2,16 @@
 // Uses environment variables for different deployment environments
 
 const getApiUrl = (): string => {
-  // In production (Vercel), use relative paths
+  // In development on localhost, use relative path to work with vite dev server proxy
   if (
     typeof window !== "undefined" &&
-    window.location.hostname !== "localhost"
+    window.location.hostname === "localhost"
   ) {
     return "/api/generate-resume";
   }
 
-  // In development, use localhost
-  return "http://localhost:3001/api/generate-resume";
+  // In production (Vercel and other hosts), use relative path
+  return "/api/generate-resume";
 };
 
 export const API_BASE_URL = getApiUrl();
