@@ -1,0 +1,53 @@
+{
+  "landing": {
+    "title": "Baguhin ang Iyong Karanasan sa",
+    "titleHighlight": "Kahanga-hangang Resume",
+    "description": "Ipasok ang iyong hindi organisa na detalye ng trabaho at hayaan ang AI na lumikha ng ATS-friendly, Harvard-format na resume sa loob ng ilang segundo",
+    "createNow": "Lumikha Ngayon"
+  },
+  "header": {
+    "title": "Baguhin ang Iyong Karanasan sa",
+    "titleHighlight": "Kahanga-hangang Resume",
+    "description": "Ipasok ang iyong hindi organisa na detalye ng trabaho at hayaan ang AI na lumikha ng ATS-friendly, Harvard-format na resume sa loob ng ilang segundo"
+  },
+  "input": {
+    "label": "Ang Iyong Impormasyon sa Trabaho",
+    "placeholder": "Ipasok o i-type ang iyong mga detalye ng trabaho dito...&#10;&#10;Halimbawa: Nag-admin ako ng 16 repositories sa GitHub. Sumuporta ako sa 3 aplikasyon na nagbibigay ng technical assistance...",
+    "aiProvider": "AI Provider",
+    "gemini": "Google Gemini 2.0 Flash",
+    "openai": "OpenAI (GPT-4o)",
+    "generate": "Lumikha ng Resume",
+    "generating": "Lumilikha ng Resume...",
+    "regenerate": "Likhain Muli ang Resume",
+    "regenerating": "Sinusulat Muli...",
+    "addMore": "Magdagdag ng Mas Maraming Detalye"
+  },
+  "preview": {
+    "label": "Preview ng Resume",
+    "empty": "Ang iyong AI-generated na resume ay lalabas dito",
+    "pdf": "PDF",
+    "docx": "Word (.docx)",
+    "txt": "Text (.txt)",
+    "download": "I-download"
+  },
+  "features": {
+    "aiPowered": "AI-Powered",
+    "aiPoweredDesc": "Advanced AI ang nagbabago ng iyong raw data sa refined na nilalaman",
+    "atsFriendly": "ATS-Friendly",
+    "atsFriendlyDesc": "Optimized na pumasa sa Applicant Tracking Systems",
+    "instantDownload": "Instant Download",
+    "instantDownloadDesc": "I-export ang iyong resume bilang PDF sa isang click"
+  },
+  "messages": {
+    "errorNoJobInfo": "Mangyaring pumasok ang iyong impormasyon sa trabaho",
+    "errorGenerate": "Nabigo ang paglikha ng resume",
+    "successGenerate": "Matagumpay na nalikha ang resume!",
+    "errorDownload": "Nabigo ang pag-download ng resume",
+    "successPdf": "Matagumpay na na-download ang PDF!",
+    "successDocx": "Matagumpay na na-download ang Word document!",
+    "successTxt": "Matagumpay na na-download ang text file!",
+    "errorNoResume": "Walang resume na i-download",
+    "successRegenerate": "Matagumpay na sinulat muli ang resume!",
+    "errorRegenerate": "Nabigo ang pag-sulat muli ng resume"
+  }
+}

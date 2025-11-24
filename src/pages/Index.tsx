@@ -9,13 +9,26 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Loader2, FileDown, Sparkles } from "lucide-react";
+import {
+  Loader2,
+  FileDown,
+  Sparkles,
+  Linkedin,
+  Github,
+  Mail,
+  Moon,
+  Sun,
+} from "lucide-react";
 import { toast } from "sonner";
+import { useTheme } from "@/contexts/ThemeContext";
+import { useTranslation } from "react-i18next";
 import jsPDF from "jspdf";
 import { Document, Packer, Paragraph } from "docx";
 import { saveAs } from "file-saver";
 
 const Index = () => {
+  const { theme, toggleTheme } = useTheme();
+  const { t, i18n } = useTranslation();
   const [jobInfo, setJobInfo] = useState("");
   const [resume, setResume] = useState("");
   const [isGenerating, setIsGenerating] = useState(false);
@@ -178,6 +191,22 @@ const Index = () => {
 
   return (
     <div className="min-h-screen bg-gradient-subtle">
+      {/* Theme Toggle Button */}
+      <div className="fixed top-4 right-4 z-50">
+        <Button
+          onClick={toggleTheme}
+          variant="outline"
+          size="icon"
+          className="rounded-full bg-background border-border hover:bg-secondary"
+        >
+          {theme === "light" ? (
+            <Moon className="w-5 h-5" />
+          ) : (
+            <Sun className="w-5 h-5" />
+          )}
+        </Button>
+      </div>
+
       <div className="container mx-auto px-4 py-12 max-w-6xl">
         {/* Header */}
         <div className="text-center mb-12 space-y-4">
@@ -384,6 +413,37 @@ const Index = () => {
               Export your resume as PDF with one click
             </p>
           </Card>
+        </div>
+
+        {/* Footer */}
+        <div className="mt-16 pt-8 border-t border-border">
+          <div className="flex justify-center gap-6">
+            <a
+              href="https://linkedin.com"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center justify-center w-12 h-12 rounded-full bg-primary/10 text-primary hover:bg-primary hover:text-primary-foreground transition-all duration-300"
+              aria-label="LinkedIn"
+            >
+              <Linkedin className="w-6 h-6" />
+            </a>
+            <a
+              href="https://github.com"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center justify-center w-12 h-12 rounded-full bg-primary/10 text-primary hover:bg-primary hover:text-primary-foreground transition-all duration-300"
+              aria-label="GitHub"
+            >
+              <Github className="w-6 h-6" />
+            </a>
+            <a
+              href="mailto:contact@example.com"
+              className="inline-flex items-center justify-center w-12 h-12 rounded-full bg-primary/10 text-primary hover:bg-primary hover:text-primary-foreground transition-all duration-300"
+              aria-label="Email"
+            >
+              <Mail className="w-6 h-6" />
+            </a>
+          </div>
         </div>
       </div>
     </div>

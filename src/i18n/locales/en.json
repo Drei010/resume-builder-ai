@@ -1,0 +1,63 @@
+{
+  "landing": {
+    "logo": "TalentEdge-AI",
+    "title": "Transform Your Experience into a",
+    "highlight": "Standout Resume",
+    "description": "Paste your unorganized job details and let AI create an ATS-friendly, Harvard-format resume in seconds",
+    "button": "Create Now"
+  },
+  "header": {
+    "title": "Transform Your Experience into a",
+    "highlight": "Standout Resume",
+    "description": "Paste your unorganized job details and let AI create an ATS-friendly, Harvard-format resume in seconds"
+  },
+  "input": {
+    "label": "Your Job Information",
+    "placeholder": "Paste or type your job details here...\n\nExample: I admined 16 repositories in GitHub. I supported 3 applications providing technical assistance...",
+    "provider": "AI Provider",
+    "gemini": "Google Gemini 2.0 Flash",
+    "openai": "OpenAI (GPT-4o)",
+    "generateBtn": "Generate Resume",
+    "generatingBtn": "Generating Resume...",
+    "regenerateBtn": "Regenerate Resume",
+    "regeneratingBtn": "Regenerating...",
+    "addDetailsBtn": "Add More Details"
+  },
+  "preview": {
+    "label": "Resume Preview",
+    "format": {
+      "pdf": "PDF",
+      "docx": "Word (.docx)",
+      "txt": "Text (.txt)"
+    },
+    "downloadBtn": "Download",
+    "placeholder": "Your AI-generated resume will appear here"
+  },
+  "features": {
+    "aiPowered": {
+      "title": "AI-Powered",
+      "description": "Advanced AI transforms your raw data into polished content"
+    },
+    "atsFriendly": {
+      "title": "ATS-Friendly",
+      "description": "Optimized to pass Applicant Tracking Systems"
+    },
+    "instantDownload": {
+      "title": "Instant Download",
+      "description": "Export your resume as PDF with one click"
+    }
+  },
+  "messages": {
+    "noJobInfo": "Please enter your job information",
+    "generating": "Generating...",
+    "success": "Resume generated successfully!",
+    "regenerateSuccess": "Resume regenerated successfully!",
+    "error": "Failed to generate resume",
+    "regenerateError": "Failed to regenerate resume",
+    "noResume": "No resume to download",
+    "downloadPdf": "PDF downloaded successfully!",
+    "downloadDocx": "Word document downloaded successfully!",
+    "downloadTxt": "Text file downloaded successfully!",
+    "downloadError": "Failed to download resume"
+  }
+}

@@ -1,0 +1,63 @@
+{
+  "landing": {
+    "logo": "TalentEdge-AI",
+    "title": "Transforma Tu Experiencia en un",
+    "highlight": "Currículum Destacado",
+    "description": "Pega tus detalles de trabajo desorganizados y deja que la IA cree un currículum en formato Harvard optimizado para ATS en segundos",
+    "button": "Crear Ahora"
+  },
+  "header": {
+    "title": "Transforma Tu Experiencia en un",
+    "highlight": "Currículum Destacado",
+    "description": "Pega tus detalles de trabajo desorganizados y deja que la IA cree un currículum en formato Harvard optimizado para ATS en segundos"
+  },
+  "input": {
+    "label": "Tu Información Laboral",
+    "placeholder": "Pega o escribe tus detalles de trabajo aquí...\n\nEjemplo: Administré 16 repositorios en GitHub. Proporcioné soporte técnico para 3 aplicaciones...",
+    "provider": "Proveedor de IA",
+    "gemini": "Google Gemini 2.0 Flash",
+    "openai": "OpenAI (GPT-4o)",
+    "generateBtn": "Generar Currículum",
+    "generatingBtn": "Generando Currículum...",
+    "regenerateBtn": "Regenerar Currículum",
+    "regeneratingBtn": "Regenerando...",
+    "addDetailsBtn": "Agregar Más Detalles"
+  },
+  "preview": {
+    "label": "Vista Previa del Currículum",
+    "format": {
+      "pdf": "PDF",
+      "docx": "Word (.docx)",
+      "txt": "Texto (.txt)"
+    },
+    "downloadBtn": "Descargar",
+    "placeholder": "Tu currículum generado por IA aparecerá aquí"
+  },
+  "features": {
+    "aiPowered": {
+      "title": "Impulsado por IA",
+      "description": "La IA avanzada transforma tus datos crudos en contenido pulido"
+    },
+    "atsFriendly": {
+      "title": "Compatible con ATS",
+      "description": "Optimizado para pasar los Sistemas de Seguimiento de Candidatos"
+    },
+    "instantDownload": {
+      "title": "Descarga Instantánea",
+      "description": "Exporta tu currículum como PDF con un clic"
+    }
+  },
+  "messages": {
+    "noJobInfo": "Por favor, ingresa tu información laboral",
+    "generating": "Generando...",
+    "success": "¡Currículum generado exitosamente!",
+    "regenerateSuccess": "¡Currículum regenerado exitosamente!",
+    "error": "No se pudo generar el currículum",
+    "regenerateError": "No se pudo regenerar el currículum",
+    "noResume": "No hay currículum para descargar",
+    "downloadPdf": "¡PDF descargado exitosamente!",
+    "downloadDocx": "¡Documento de Word descargado exitosamente!",
+    "downloadTxt": "¡Archivo de texto descargado exitosamente!",
+    "downloadError": "No se pudo descargar el currículum"
+  }
+}
