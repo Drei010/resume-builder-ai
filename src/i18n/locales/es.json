@@ -13,7 +13,7 @@
   },
   "input": {
     "label": "Tu Información Laboral",
-    "placeholder": "Pega o escribe tus detalles de trabajo aquí...\n\nEjemplo: Administré 16 repositorios en GitHub. Proporcioné soporte técnico para 3 aplicaciones...",
+    "placeholder": "Pega o escribe tus detalles de trabajo aquí...\n\nEjemplo: “Soy Kyle, un desarrollador web front end. Creo aplicaciones usando JavaScript. Tengo dos años de experiencia y quiero convertirme en desarrollador full-stack.",
     "provider": "Proveedor de IA",
     "gemini": "Google Gemini 2.0 Flash",
     "openai": "OpenAI (GPT-4o)",

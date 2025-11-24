@@ -12,7 +12,7 @@
   },
   "input": {
     "label": "Ang Iyong Impormasyon sa Trabaho",
-    "placeholder": "Ipasok o i-type ang iyong mga detalye ng trabaho dito...&#10;&#10;Halimbawa: Nag-admin ako ng 16 repositories sa GitHub. Sumuporta ako sa 3 aplikasyon na nagbibigay ng technical assistance...",
+    "placeholder": "Ipasok o i-type ang iyong mga detalye ng trabaho dito...&#10;&#10;Halimbawa: “Ako si Kyle, isang front end developer. Gumagawa ako ng mga app gamit ang JavaScript. May dalawang taon na akong karanasan at gusto kong maging full-stack developer.",
     "aiProvider": "AI Provider",
     "gemini": "Google Gemini 2.0 Flash",
     "openai": "OpenAI (GPT-4o)",

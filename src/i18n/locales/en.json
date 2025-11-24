@@ -13,7 +13,7 @@
   },
   "input": {
     "label": "Your Job Information",
-    "placeholder": "Paste or type your job details here...\n\nExample: I admined 16 repositories in GitHub. I supported 3 applications providing technical assistance...",
+    "placeholder": "Paste or type your job details here...\n\nExample: I'm Kyle, A front end web developer. I create apps in javascript. I have 2 years experience and I want to be a fullstack developer...",
     "provider": "AI Provider",
     "gemini": "Google Gemini 2.0 Flash",
     "openai": "OpenAI (GPT-4o)",
