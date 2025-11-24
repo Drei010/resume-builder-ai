@@ -13,16 +13,27 @@ This application is configured for easy deployment to Vercel with both frontend 
 
 ### Environment Variables
 
-Set these environment variables in Vercel project settings:
+You must set these environment variables in Vercel dashboard **BEFORE** deploying:
 
-```
-OPENAI_API_KEY=your_openai_api_key
-GEMINI_API_KEY=your_gemini_api_key
-```
+1. Go to your Vercel Project Settings
+2. Navigate to "Environment Variables"
+3. Add these variables:
+   - Name: `OPENAI_API_KEY` → Value: `your_openai_api_key`
+   - Name: `GEMINI_API_KEY` → Value: `your_gemini_api_key`
+4. Save and redeploy
+
+⚠️ **Important**: Set environment variables BEFORE pushing the code to avoid deployment failures.
 
 ### Deployment Steps
 
-1. **Push to GitHub**
+1. **Set Environment Variables in Vercel Dashboard First**
+
+   - Go to https://vercel.com/dashboard
+   - Select your project
+   - Settings → Environment Variables
+   - Add `OPENAI_API_KEY` and `GEMINI_API_KEY`
+
+2. **Push to GitHub**
 
    ```bash
    git add .
@@ -30,18 +41,18 @@ GEMINI_API_KEY=your_gemini_api_key
    git push origin main
    ```
 
-2. **Connect to Vercel**
+3. **Connect to Vercel**
 
    - Go to https://vercel.com/new
    - Select your GitHub repository
    - Vercel will auto-detect Next.js/React settings
 
-3. **Set Environment Variables**
+4. **Set Environment Variables**
 
    - In Vercel dashboard, go to Settings → Environment Variables
    - Add `OPENAI_API_KEY` and `GEMINI_API_KEY`
 
-4. **Deploy**
+5. **Deploy**
    - Click "Deploy"
    - Vercel will automatically build and deploy your app
 
