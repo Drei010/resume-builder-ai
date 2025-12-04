@@ -313,7 +313,7 @@ const Index = () => {
 
           {/* Preview Section */}
           <Card className="p-6 border bg-card flex flex-col h-full">
-            <div className="flex items-center justify-between mb-4">
+            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-4">
               <h2 className="text-2xl font-semibold text-foreground">
                 Resume Preview
               </h2>
@@ -348,7 +348,7 @@ const Index = () => {
                 <Textarea
                   value={resume}
                   onChange={(e) => setResume(e.target.value)}
-                  className="h-full resize-none border-0 bg-transparent p-0 text-sm font-mono text-foreground focus:ring-0"
+                  className="h-full min-h-[400px] resize-none border-0 bg-transparent p-0 text-sm font-mono text-foreground focus:ring-0"
                 />
               ) : (
                 <div className="h-full flex items-center justify-center text-muted-foreground">

@@ -37,6 +37,8 @@ async function generateResume(req, res) {
 
   const { jobInfo, aiProvider = "openai" } = req.body;
 
+  console.log(jobInfo);
+  console.log(aiProvider);
   if (!jobInfo) {
     return res.status(400).json({ error: "jobInfo is required" });
   }
