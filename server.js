@@ -1,7 +1,7 @@
 import express from "express";
 import cors from "cors";
 import dotenv from "dotenv";
-import { generateResume } from "./api/generate-resume.js";
+import { generateResume } from "./srv/index.ts";
 
 dotenv.config();
 
