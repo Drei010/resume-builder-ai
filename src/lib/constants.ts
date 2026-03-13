@@ -9,7 +9,7 @@ export const SOCIAL_LINKS = {
 
 // App Configuration
 export const APP_CONFIG = {
-  name: "TalentEdge AI",
+  name: "TalentEdge-AI",
   description: "Transform your experience into a standout resume",
   version: "1.0.0",
 };

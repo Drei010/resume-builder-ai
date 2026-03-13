@@ -1,21 +1,22 @@
 // API Configuration
 // Uses environment variables for different deployment environments
 
-const getApiUrl = (): string => {
+const getApiBaseUrl = (): string => {
   // In development on localhost, use relative path to work with vite dev server proxy
   if (
     typeof window !== "undefined" &&
     window.location.hostname === "localhost"
   ) {
-    return "/api/generate-resume";
+    return "/api";
   }
 
   // In production (Vercel and other hosts), use relative path
-  return "/api/generate-resume";
+  return "/api";
 };
 
-export const API_BASE_URL = getApiUrl();
+export const API_BASE_URL = getApiBaseUrl();
 
 export const API_ENDPOINTS = {
-  generateResume: API_BASE_URL,
+  generateResume: `${API_BASE_URL}/generate-resume`,
+  tailorResume: `${API_BASE_URL}/tailor-resume`,
 };
