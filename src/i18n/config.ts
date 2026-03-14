@@ -4,20 +4,22 @@ import en from "./locales/en.json";
 import es from "./locales/es.json";
 import tl from "./locales/tl.json";
 
-i18next.use(initReactI18next).init({
-  resources: {
-    en: { translation: en },
-    es: { translation: es },
-    tl: { translation: tl },
-  },
-  lng: localStorage.getItem("language") || "en",
-  fallbackLng: "en",
-  interpolation: {
-    escapeValue: false,
-  },
-  react: {
-    useSuspense: false,
-  },
-});
+if (typeof window !== "undefined") {
+  i18next.use(initReactI18next).init({
+    resources: {
+      en: { translation: en },
+      es: { translation: es },
+      tl: { translation: tl },
+    },
+    lng: localStorage.getItem("language") || "en",
+    fallbackLng: "en",
+    interpolation: {
+      escapeValue: false,
+    },
+    react: {
+      useSuspense: false,
+    },
+  });
+}
 
 export default i18next;

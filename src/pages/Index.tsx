@@ -1,8 +1,9 @@
 import { useState } from "react";
 import { PageShell } from "@/components/PageShell";
+import { ResumeOutput } from "@/components/ResumeOutput";
 import { Button } from "@/components/ui/button";
-import { Textarea } from "@/components/ui/textarea";
 import { Card } from "@/components/ui/card";
+import { Textarea } from "@/components/ui/textarea";
 import {
   Select,
   SelectContent,
@@ -12,54 +13,22 @@ import {
 } from "@/components/ui/select";
 import { Loader2, FileDown, Sparkles } from "lucide-react";
 import { toast } from "sonner";
-import { API_ENDPOINTS } from "@/lib/api-config";
-import jsPDF from "jspdf";
-import { Document, Packer, Paragraph } from "docx";
-import { saveAs } from "file-saver";
+import { useResumePipeline } from "@/hooks/useResumePipeline";
+import type { AiProvider } from "@/api/resumeApi";
 
 const Index = () => {
   const [jobInfo, setJobInfo] = useState("");
-  const [resume, setResume] = useState("");
-  const [isGenerating, setIsGenerating] = useState(false);
-  const [aiProvider, setAiProvider] = useState<"gemini" | "openai">("openai");
+  const [aiProvider, setAiProvider] = useState<AiProvider>("openai");
   const [downloadFormat, setDownloadFormat] = useState<
     "pdf" | "docx" | "txt" | "json"
   >("json");
+  const { resumeData, isGenerating, generate, regenerate, reset } =
+    useResumePipeline();
 
-  const handleGenerate = async () => {
-    if (!jobInfo.trim()) {
-      toast.error("Please enter your job information");
-      return;
-    }
-
-    setIsGenerating(true);
-    try {
-      const response = await fetch(API_ENDPOINTS.generateResume, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ jobInfo, aiProvider }),
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || "Failed to generate resume");
-      }
-
-      const data = await response.json();
-      setResume(JSON.stringify(data, null, 2));
-      toast.success("Resume generated successfully!");
-    } catch (error: any) {
-      console.error("Error generating resume:", error);
-      toast.error(error.message || "Failed to generate resume");
-    } finally {
-      setIsGenerating(false);
-    }
-  };
+  const handleGenerate = () => generate(jobInfo, aiProvider);
 
   const handleAddMoreDetails = () => {
-    setResume("");
+    reset();
     // Focus back on job info textarea
     const textarea = document.querySelector(
       'textarea[placeholder*="Paste or type"]'
@@ -67,53 +36,23 @@ const Index = () => {
     if (textarea) textarea.focus();
   };
 
-  const handleRegenerateResume = async () => {
-    if (!jobInfo.trim()) {
-      toast.error("Please enter your job information");
-      return;
-    }
-
-    setIsGenerating(true);
-    try {
-      const response = await fetch(API_ENDPOINTS.generateResume, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ jobInfo, aiProvider }),
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || "Failed to generate resume");
-      }
-
-      const data = await response.json();
-      setResume(JSON.stringify(data, null, 2));
-      toast.success("Resume regenerated successfully!");
-    } catch (error: any) {
-      console.error("Error regenerating resume:", error);
-      toast.error(error.message || "Failed to regenerate resume");
-    } finally {
-      setIsGenerating(false);
-    }
-  };
+  const handleRegenerateResume = () => regenerate(jobInfo, aiProvider);
 
   const handleDownload = async () => {
-    if (!resume) {
+    if (!resumeData) {
       toast.error("No resume to download");
       return;
     }
 
     try {
       if (downloadFormat === "json") {
-        downloadJson();
+        await downloadJson(resumeData);
       } else if (downloadFormat === "pdf") {
-        downloadPDF();
+        await downloadPDF(resumeData);
       } else if (downloadFormat === "docx") {
-        await downloadDocx();
+        await downloadDocx(resumeData);
       } else if (downloadFormat === "txt") {
-        downloadTxt();
+        await downloadTxt(resumeData);
       }
     } catch (error) {
       console.error("Error downloading resume:", error);
@@ -121,15 +60,17 @@ const Index = () => {
     }
   };
 
-  const downloadPDF = () => {
+  const downloadPDF = async (data: NonNullable<typeof resumeData>) => {
     try {
+      const { default: jsPDF } = await import("jspdf");
+      const resumeJson = JSON.stringify(data, null, 2);
       const doc = new jsPDF();
       const pageWidth = doc.internal.pageSize.getWidth();
       const pageHeight = doc.internal.pageSize.getHeight();
       const margin = 20;
       const maxWidth = pageWidth - margin * 2;
 
-      const lines = doc.splitTextToSize(resume, maxWidth);
+      const lines = doc.splitTextToSize(resumeJson, maxWidth);
       let y = margin;
       const lineHeight = 7;
 
@@ -150,9 +91,14 @@ const Index = () => {
     }
   };
 
-  const downloadDocx = async () => {
+  const downloadDocx = async (data: NonNullable<typeof resumeData>) => {
     try {
-      const paragraphs = resume.split("\n").map((line) => new Paragraph(line));
+      const { Document, Packer, Paragraph } = await import("docx");
+      const { saveAs } = await import("file-saver");
+      const resumeJson = JSON.stringify(data, null, 2);
+      const paragraphs = resumeJson
+        .split("\n")
+        .map((line) => new Paragraph(line));
       const doc = new Document({ sections: [{ children: paragraphs }] });
       const blob = await Packer.toBlob(doc);
       saveAs(blob, "resume.docx");
@@ -163,9 +109,11 @@ const Index = () => {
     }
   };
 
-  const downloadTxt = () => {
+  const downloadTxt = async (data: NonNullable<typeof resumeData>) => {
     try {
-      const blob = new Blob([resume], { type: "text/plain" });
+      const { saveAs } = await import("file-saver");
+      const resumeJson = JSON.stringify(data, null, 2);
+      const blob = new Blob([resumeJson], { type: "text/plain" });
       saveAs(blob, "resume.txt");
       toast.success("Text file downloaded successfully!");
     } catch (error) {
@@ -174,9 +122,11 @@ const Index = () => {
     }
   };
 
-  const downloadJson = () => {
+  const downloadJson = async (data: NonNullable<typeof resumeData>) => {
     try {
-      const blob = new Blob([resume], { type: "application/json" });
+      const { saveAs } = await import("file-saver");
+      const resumeJson = JSON.stringify(data, null, 2);
+      const blob = new Blob([resumeJson], { type: "application/json" });
       saveAs(blob, "resume.json");
       toast.success("JSON file downloaded successfully!");
     } catch (error) {
@@ -224,9 +174,7 @@ const Index = () => {
               </label>
               <Select
                 value={aiProvider}
-                onValueChange={(value: "openai" | "gemini") =>
-                  setAiProvider(value)
-                }
+                onValueChange={(value: AiProvider) => setAiProvider(value)}
               >
                 <SelectTrigger className="w-full bg-background">
                   <SelectValue />
@@ -237,7 +185,7 @@ const Index = () => {
                 </SelectContent>
               </Select>
             </div>
-            {!resume ? (
+            {!resumeData ? (
               <Button
                 onClick={handleGenerate}
                 disabled={isGenerating || !jobInfo.trim()}
@@ -295,11 +243,13 @@ const Index = () => {
             <h2 className="text-2xl font-semibold text-foreground">
               ATS Candidate Summary JSON
             </h2>
-            {resume && (
+            {resumeData && (
               <div className="flex gap-2">
                 <Select
                   value={downloadFormat}
-                  onValueChange={(value: any) => setDownloadFormat(value)}
+                  onValueChange={(
+                    value: "pdf" | "docx" | "txt" | "json"
+                  ) => setDownloadFormat(value)}
                 >
                   <SelectTrigger className="w-40 bg-background">
                     <SelectValue />
@@ -323,17 +273,16 @@ const Index = () => {
             )}
           </div>
           <div className="flex-1 bg-muted/30 rounded-lg p-6 border border-border overflow-y-auto">
-            {resume ? (
-              <Textarea
-                value={resume}
-                onChange={(e) => setResume(e.target.value)}
-                className="h-full min-h-[400px] resize-none border-0 bg-transparent p-0 text-sm font-mono text-foreground focus:ring-0"
+            {resumeData ? (
+              <ResumeOutput
+                resumeData={resumeData}
+                className="border-0 shadow-none bg-transparent p-0"
               />
             ) : (
               <div className="h-full flex items-center justify-center text-muted-foreground">
                 <div className="text-center space-y-2">
                   <Sparkles className="w-12 h-12 mx-auto opacity-20" />
-                    <p>Your ATS candidate summary JSON will appear here</p>
+                  <p>Your ATS candidate summary will appear here</p>
                 </div>
               </div>
             )}

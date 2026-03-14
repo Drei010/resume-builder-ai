@@ -25,6 +25,7 @@ export default defineConfig(({ mode }) => ({
   resolve: {
     alias: {
       "@": path.resolve(__dirname, "./src"),
+      "@shared": path.resolve(__dirname, "./shared"),
     },
   },
   base: process.env.VITE_BASE_PATH || "/resume-builder-ai",

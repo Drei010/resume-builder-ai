@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { PageShell } from "@/components/PageShell";
+import { ResumeOutput } from "@/components/ResumeOutput";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -12,76 +13,12 @@ import {
   XCircle,
 } from "lucide-react";
 import { toast } from "sonner";
-import { API_ENDPOINTS } from "@/lib/api-config";
-
-type JobDescription = {
-  jobTitle: string;
-  company: string;
-  responsibilities: string[];
-  requiredSkills: string[];
-  preferredQualifications: string[];
-};
-
-type AtsCandidateSummary = {
-  candidate_id: string;
-  personal_info: {
-    full_name: string;
-    email: string;
-    phone: string;
-    location: {
-      city: string;
-      country: string;
-      remote_willing: boolean;
-    };
-    linkedin_url: string;
-  };
-  application: {
-    job_id: string;
-    job_title: string;
-    department: string;
-    applied_date: string;
-    source: string;
-    status: string;
-  };
-  resume_summary: {
-    headline: string;
-    years_of_experience: number;
-    highest_education: {
-      degree: string;
-      field: string;
-      institution: string;
-      year: number;
-    };
-    skills: {
-      technical: string[];
-      soft: string[];
-    };
-    certifications: string[];
-    work_experience: Array<{
-      company: string;
-      title: string;
-      start_date: string;
-      end_date: string;
-      current: boolean;
-      description: string;
-    }>;
-  };
-  scoring: {
-    overall_match_score: number;
-    keyword_match_score: number;
-    experience_match_score: number;
-    education_match_score: number;
-    matched_keywords: string[];
-    missing_keywords: string[];
-  };
-  metadata: {
-    created_at: string;
-    updated_at: string;
-    created_by: string;
-    tags: string[];
-    gdpr_consent: boolean;
-  };
-};
+import {
+  extractJobDescription,
+  optimizeResume,
+  type JobDescription,
+} from "@/api/resumeApi";
+import type { ATSCandidateSummary } from "@shared/ats";
 
 const allowedExtensions = [".pdf", ".docx", ".txt"];
 
@@ -93,7 +30,7 @@ const JobDescriptionPage = () => {
     null
   );
   const [optimizedResume, setOptimizedResume] =
-    useState<AtsCandidateSummary | null>(null);
+    useState<ATSCandidateSummary | null>(null);
 
   const [loadingExtraction, setLoadingExtraction] = useState(false);
   const [loadingOptimization, setLoadingOptimization] = useState(false);
@@ -131,38 +68,15 @@ const JobDescriptionPage = () => {
     setOptimizationError(null);
   };
 
-  const parseErrorMessage = async (response: Response, fallback: string) => {
-    try {
-      const data = await response.json();
-      return data.error || fallback;
-    } catch {
-      return fallback;
-    }
-  };
-
   const runExtraction = async () => {
     setLoadingExtraction(true);
     setExtractionError(null);
 
     try {
-      const response = await fetch(API_ENDPOINTS.extractJob, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ jobUrl: linkedinUrl.trim() }),
-      });
-
-      if (!response.ok) {
-        const message = await parseErrorMessage(
-          response,
-          "Failed to extract job description"
-        );
-        throw new Error(message);
-      }
-
-      const data = await response.json();
-      setJobDescription(data.jobDescription);
+      const extracted = await extractJobDescription(linkedinUrl.trim());
+      setJobDescription(extracted);
       toast.success("Job description extracted");
-      return data.jobDescription as JobDescription;
+      return extracted;
     } catch (error: any) {
       const message =
         error?.message || "Failed to extract job description. Please try again.";
@@ -183,27 +97,10 @@ const JobDescriptionPage = () => {
     setOptimizationError(null);
 
     try {
-      const formData = new FormData();
-      formData.append("resume", resumeFile);
-      formData.append("jobDescription", JSON.stringify(extractedJob));
-
-      const response = await fetch(API_ENDPOINTS.optimizeResume, {
-        method: "POST",
-        body: formData,
-      });
-
-      if (!response.ok) {
-        const message = await parseErrorMessage(
-          response,
-          "Failed to optimize resume"
-        );
-        throw new Error(message);
-      }
-
-      const data = await response.json();
+      const data = await optimizeResume(resumeFile, extractedJob);
       setOptimizedResume(data);
       toast.success("Resume optimization complete");
-      return data as AtsCandidateSummary;
+      return data;
     } catch (error: any) {
       const message =
         error?.message || "Failed to optimize resume. Please try again.";
@@ -455,9 +352,10 @@ const JobDescriptionPage = () => {
                     <Sparkles className="h-4 w-4 text-primary" />
                     ATS Candidate Summary
                   </div>
-                  <pre className="whitespace-pre-wrap text-xs font-mono text-foreground bg-background/60 rounded-md p-3 border border-border overflow-x-auto">
-                    {JSON.stringify(optimizedResume, null, 2)}
-                  </pre>
+                  <ResumeOutput
+                    resumeData={optimizedResume}
+                    className="border-0 shadow-none bg-transparent p-0"
+                  />
                 </div>
               )}
             </div>
