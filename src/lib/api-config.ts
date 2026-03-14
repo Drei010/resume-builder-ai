@@ -18,5 +18,7 @@ export const API_BASE_URL = getApiBaseUrl();
 
 export const API_ENDPOINTS = {
   generateResume: `${API_BASE_URL}/generate-resume`,
+  extractJob: `${API_BASE_URL}/extract-job`,
+  optimizeResume: `${API_BASE_URL}/optimize-resume`,
   tailorResume: `${API_BASE_URL}/tailor-resume`,
 };

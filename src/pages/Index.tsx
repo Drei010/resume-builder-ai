@@ -22,9 +22,9 @@ const Index = () => {
   const [resume, setResume] = useState("");
   const [isGenerating, setIsGenerating] = useState(false);
   const [aiProvider, setAiProvider] = useState<"gemini" | "openai">("openai");
-  const [downloadFormat, setDownloadFormat] = useState<"pdf" | "docx" | "txt">(
-    "pdf"
-  );
+  const [downloadFormat, setDownloadFormat] = useState<
+    "pdf" | "docx" | "txt" | "json"
+  >("json");
 
   const handleGenerate = async () => {
     if (!jobInfo.trim()) {
@@ -48,7 +48,7 @@ const Index = () => {
       }
 
       const data = await response.json();
-      setResume(data.resume);
+      setResume(JSON.stringify(data, null, 2));
       toast.success("Resume generated successfully!");
     } catch (error: any) {
       console.error("Error generating resume:", error);
@@ -89,7 +89,7 @@ const Index = () => {
       }
 
       const data = await response.json();
-      setResume(data.resume);
+      setResume(JSON.stringify(data, null, 2));
       toast.success("Resume regenerated successfully!");
     } catch (error: any) {
       console.error("Error regenerating resume:", error);
@@ -106,7 +106,9 @@ const Index = () => {
     }
 
     try {
-      if (downloadFormat === "pdf") {
+      if (downloadFormat === "json") {
+        downloadJson();
+      } else if (downloadFormat === "pdf") {
         downloadPDF();
       } else if (downloadFormat === "docx") {
         await downloadDocx();
@@ -172,6 +174,17 @@ const Index = () => {
     }
   };
 
+  const downloadJson = () => {
+    try {
+      const blob = new Blob([resume], { type: "application/json" });
+      saveAs(blob, "resume.json");
+      toast.success("JSON file downloaded successfully!");
+    } catch (error) {
+      console.error("Error generating JSON:", error);
+      throw error;
+    }
+  };
+
   return (
     <PageShell>
       <div className="text-center mb-12 space-y-4">
@@ -188,8 +201,8 @@ const Index = () => {
           </span>
         </h1>
         <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
-          Paste unorganized experience and let AI craft an ATS-friendly,
-          Harvard-format resume in seconds.
+          Paste unorganized experience and let AI generate an ATS-ready
+          candidate summary in structured JSON.
         </p>
       </div>
 
@@ -280,7 +293,7 @@ const Index = () => {
         <Card className="p-6 border bg-card flex flex-col h-full">
           <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-4">
             <h2 className="text-2xl font-semibold text-foreground">
-              Resume Preview
+              ATS Candidate Summary JSON
             </h2>
             {resume && (
               <div className="flex gap-2">
@@ -292,6 +305,7 @@ const Index = () => {
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent className="bg-popover border-border">
+                    <SelectItem value="json">JSON</SelectItem>
                     <SelectItem value="pdf">PDF</SelectItem>
                     <SelectItem value="docx">Word (.docx)</SelectItem>
                     <SelectItem value="txt">Text (.txt)</SelectItem>
@@ -319,7 +333,7 @@ const Index = () => {
               <div className="h-full flex items-center justify-center text-muted-foreground">
                 <div className="text-center space-y-2">
                   <Sparkles className="w-12 h-12 mx-auto opacity-20" />
-                  <p>Your AI-generated resume will appear here</p>
+                    <p>Your ATS candidate summary JSON will appear here</p>
                 </div>
               </div>
             )}

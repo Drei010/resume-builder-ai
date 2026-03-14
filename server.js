@@ -2,7 +2,12 @@ import express from "express";
 import cors from "cors";
 import dotenv from "dotenv";
 import multer from "multer";
-import { generateResume, tailorResume } from "./srv/index.ts";
+import {
+  generateResume,
+  extractJobDescription,
+  optimizeResume,
+  tailorResume,
+} from "./srv/index.ts";
 
 dotenv.config();
 
@@ -19,6 +24,8 @@ const upload = multer({
   storage: multer.memoryStorage(),
   limits: { fileSize: 8 * 1024 * 1024 },
 });
+app.post("/api/extract-job", extractJobDescription);
+app.post("/api/optimize-resume", upload.single("resume"), optimizeResume);
 app.post("/api/tailor-resume", upload.single("resume"), tailorResume);
 
 // Handle multer errors
@@ -45,6 +52,12 @@ if (process.env.NODE_ENV !== "production") {
     console.log(`Server running on http://localhost:${PORT}`);
     console.log(
       `Resume endpoint: POST http://localhost:${PORT}/api/generate-resume`
+    );
+    console.log(
+      `Extract endpoint: POST http://localhost:${PORT}/api/extract-job`
+    );
+    console.log(
+      `Optimize endpoint: POST http://localhost:${PORT}/api/optimize-resume`
     );
     console.log(
       `Tailor endpoint: POST http://localhost:${PORT}/api/tailor-resume`

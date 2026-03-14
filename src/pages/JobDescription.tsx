@@ -3,46 +3,104 @@ import { PageShell } from "@/components/PageShell";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import {
-  FileDown,
-  Loader2,
-  Link2,
-  Sparkles,
+  CheckCircle2,
   FileText,
+  Link2,
+  Loader2,
+  Sparkles,
+  XCircle,
 } from "lucide-react";
 import { toast } from "sonner";
 import { API_ENDPOINTS } from "@/lib/api-config";
-import jsPDF from "jspdf";
-import { Document, Packer, Paragraph } from "docx";
-import { saveAs } from "file-saver";
 
-type JobDetails = {
-  title?: string;
-  company?: string;
-  location?: string;
-  description?: string;
-  url?: string;
+type JobDescription = {
+  jobTitle: string;
+  company: string;
+  responsibilities: string[];
+  requiredSkills: string[];
+  preferredQualifications: string[];
+};
+
+type AtsCandidateSummary = {
+  candidate_id: string;
+  personal_info: {
+    full_name: string;
+    email: string;
+    phone: string;
+    location: {
+      city: string;
+      country: string;
+      remote_willing: boolean;
+    };
+    linkedin_url: string;
+  };
+  application: {
+    job_id: string;
+    job_title: string;
+    department: string;
+    applied_date: string;
+    source: string;
+    status: string;
+  };
+  resume_summary: {
+    headline: string;
+    years_of_experience: number;
+    highest_education: {
+      degree: string;
+      field: string;
+      institution: string;
+      year: number;
+    };
+    skills: {
+      technical: string[];
+      soft: string[];
+    };
+    certifications: string[];
+    work_experience: Array<{
+      company: string;
+      title: string;
+      start_date: string;
+      end_date: string;
+      current: boolean;
+      description: string;
+    }>;
+  };
+  scoring: {
+    overall_match_score: number;
+    keyword_match_score: number;
+    experience_match_score: number;
+    education_match_score: number;
+    matched_keywords: string[];
+    missing_keywords: string[];
+  };
+  metadata: {
+    created_at: string;
+    updated_at: string;
+    created_by: string;
+    tags: string[];
+    gdpr_consent: boolean;
+  };
 };
 
 const allowedExtensions = [".pdf", ".docx", ".txt"];
 
-const JobDescription = () => {
-  const [jobUrl, setJobUrl] = useState("");
+const JobDescriptionPage = () => {
+  const [linkedinUrl, setLinkedinUrl] = useState("");
   const [resumeFile, setResumeFile] = useState<File | null>(null);
-  const [resume, setResume] = useState("");
-  const [jobDetails, setJobDetails] = useState<JobDetails | null>(null);
-  const [isGenerating, setIsGenerating] = useState(false);
-  const [aiProvider, setAiProvider] = useState<"gemini" | "openai">("openai");
-  const [downloadFormat, setDownloadFormat] = useState<"pdf" | "docx" | "txt">(
-    "pdf"
+
+  const [jobDescription, setJobDescription] = useState<JobDescription | null>(
+    null
+  );
+  const [optimizedResume, setOptimizedResume] =
+    useState<AtsCandidateSummary | null>(null);
+
+  const [loadingExtraction, setLoadingExtraction] = useState(false);
+  const [loadingOptimization, setLoadingOptimization] = useState(false);
+
+  const [extractionError, setExtractionError] = useState<string | null>(null);
+  const [optimizationError, setOptimizationError] = useState<string | null>(
+    null
   );
 
   const isValidLinkedInUrl = (value: string) =>
@@ -66,110 +124,155 @@ const JobDescription = () => {
     setResumeFile(file);
   };
 
-  const handleGenerate = async () => {
+  const resetPipeline = () => {
+    setJobDescription(null);
+    setOptimizedResume(null);
+    setExtractionError(null);
+    setOptimizationError(null);
+  };
+
+  const parseErrorMessage = async (response: Response, fallback: string) => {
+    try {
+      const data = await response.json();
+      return data.error || fallback;
+    } catch {
+      return fallback;
+    }
+  };
+
+  const runExtraction = async () => {
+    setLoadingExtraction(true);
+    setExtractionError(null);
+
+    try {
+      const response = await fetch(API_ENDPOINTS.extractJob, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ jobUrl: linkedinUrl.trim() }),
+      });
+
+      if (!response.ok) {
+        const message = await parseErrorMessage(
+          response,
+          "Failed to extract job description"
+        );
+        throw new Error(message);
+      }
+
+      const data = await response.json();
+      setJobDescription(data.jobDescription);
+      toast.success("Job description extracted");
+      return data.jobDescription as JobDescription;
+    } catch (error: any) {
+      const message =
+        error?.message || "Failed to extract job description. Please try again.";
+      setExtractionError(message);
+      toast.error(message);
+      throw error;
+    } finally {
+      setLoadingExtraction(false);
+    }
+  };
+
+  const runOptimization = async (extractedJob: JobDescription) => {
     if (!resumeFile) {
-      toast.error("Please upload your resume file");
-      return;
-    }
-    if (!jobUrl.trim()) {
-      toast.error("Please enter a LinkedIn job URL");
-      return;
-    }
-    if (!isValidLinkedInUrl(jobUrl)) {
-      toast.error("Please enter a valid LinkedIn job URL");
-      return;
+      throw new Error("Resume file is required");
     }
 
-    setIsGenerating(true);
+    setLoadingOptimization(true);
+    setOptimizationError(null);
+
     try {
       const formData = new FormData();
       formData.append("resume", resumeFile);
-      formData.append("jobUrl", jobUrl.trim());
-      formData.append("aiProvider", aiProvider);
+      formData.append("jobDescription", JSON.stringify(extractedJob));
 
-      const response = await fetch(API_ENDPOINTS.tailorResume, {
+      const response = await fetch(API_ENDPOINTS.optimizeResume, {
         method: "POST",
         body: formData,
       });
 
       if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || "Failed to tailor resume");
+        const message = await parseErrorMessage(
+          response,
+          "Failed to optimize resume"
+        );
+        throw new Error(message);
       }
 
       const data = await response.json();
-      setResume(data.resume);
-      setJobDetails(data.jobDetails || null);
-      toast.success("Resume tailored successfully!");
+      setOptimizedResume(data);
+      toast.success("Resume optimization complete");
+      return data as AtsCandidateSummary;
     } catch (error: any) {
-      console.error("Error tailoring resume:", error);
-      toast.error(error.message || "Failed to tailor resume");
+      const message =
+        error?.message || "Failed to optimize resume. Please try again.";
+      setOptimizationError(message);
+      toast.error(message);
+      throw error;
     } finally {
-      setIsGenerating(false);
+      setLoadingOptimization(false);
     }
   };
 
-  const handleReset = () => {
-    setResume("");
-    setJobDetails(null);
-  };
-
-  const handleDownload = async () => {
-    if (!resume) {
-      toast.error("No resume to download");
+  const handleGenerate = async () => {
+    if (!resumeFile) {
+      toast.error("Please upload your resume file");
+      return;
+    }
+    if (!linkedinUrl.trim()) {
+      toast.error("Please enter a LinkedIn job URL");
+      return;
+    }
+    if (!isValidLinkedInUrl(linkedinUrl)) {
+      toast.error("Please enter a valid LinkedIn job URL");
       return;
     }
 
+    resetPipeline();
+
     try {
-      if (downloadFormat === "pdf") {
-        downloadPDF();
-      } else if (downloadFormat === "docx") {
-        await downloadDocx();
-      } else if (downloadFormat === "txt") {
-        downloadTxt();
+      const extracted = await runExtraction();
+      if (extracted) {
+        await runOptimization(extracted);
       }
-    } catch (error) {
-      console.error("Error downloading resume:", error);
-      toast.error("Failed to download resume");
+    } catch {
+      // Errors are handled in the step functions to keep UI state consistent.
     }
   };
 
-  const downloadPDF = () => {
-    const doc = new jsPDF();
-    const pageWidth = doc.internal.pageSize.getWidth();
-    const pageHeight = doc.internal.pageSize.getHeight();
-    const margin = 20;
-    const maxWidth = pageWidth - margin * 2;
+  const extractionStatus = loadingExtraction
+    ? "loading"
+    : extractionError
+    ? "error"
+    : jobDescription
+    ? "success"
+    : "idle";
 
-    const lines = doc.splitTextToSize(resume, maxWidth);
-    let y = margin;
-    const lineHeight = 7;
+  const optimizationStatus = loadingOptimization
+    ? "loading"
+    : optimizationError
+    ? "error"
+    : optimizedResume
+    ? "success"
+    : extractionError
+    ? "blocked"
+    : "idle";
 
-    lines.forEach((line: string) => {
-      if (y + lineHeight > pageHeight - margin) {
-        doc.addPage();
-        y = margin;
-      }
-      doc.text(line, margin, y);
-      y += lineHeight;
-    });
-
-    doc.save("resume.pdf");
-    toast.success("PDF downloaded successfully!");
-  };
-
-  const downloadDocx = async () => {
-    const paragraphs = resume.split("\n").map((line) => new Paragraph(line));
-    const doc = new Document({ sections: [{ children: paragraphs }] });
-    const blob = await Packer.toBlob(doc);
-    saveAs(blob, "resume.docx");
-    toast.success("Word document downloaded successfully!");
-  };
-
-  const downloadTxt = () => {
-    const blob = new Blob([resume], { type: "text/plain" });
-    saveAs(blob, "resume.txt");
-    toast.success("Text file downloaded successfully!");
+  const renderStatusIcon = (status: string) => {
+    if (status === "loading") {
+      return <Loader2 className="h-4 w-4 animate-spin text-primary" />;
+    }
+    if (status === "success") {
+      return <CheckCircle2 className="h-4 w-4 text-primary" />;
+    }
+    if (status === "error") {
+      return <XCircle className="h-4 w-4 text-destructive" />;
+    }
+    if (status === "blocked") {
+      return <span className="text-xs text-muted-foreground">Blocked</span>;
+    }
+    return <span className="text-xs text-muted-foreground">Idle</span>;
   };
 
   return (
@@ -178,18 +281,18 @@ const JobDescription = () => {
         <div className="inline-flex items-center gap-2 px-4 py-2 bg-primary/10 rounded-full mb-4">
           <Sparkles className="w-5 h-5 text-primary" />
           <span className="text-sm font-semibold text-primary tracking-wide">
-            Resume Tailoring
+            Resume Tailoring Pipeline
           </span>
         </div>
         <h1 className="text-4xl md:text-5xl font-bold text-foreground">
-          Tailor your resume to a{" "}
+          Two-step optimization for{" "}
           <span className="bg-gradient-primary bg-clip-text text-transparent">
-            LinkedIn job post
+            LinkedIn job posts
           </span>
         </h1>
         <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
-          Upload your resume and paste the job URL. The AI extracts role
-          requirements and rewrites your resume to match the posting.
+          Step 1 extracts structured job data. Step 2 returns an ATS candidate
+          summary JSON aligned with those requirements.
         </p>
       </div>
 
@@ -217,174 +320,152 @@ const JobDescription = () => {
               <Input
                 type="url"
                 placeholder="https://www.linkedin.com/jobs/view/4327959806/"
-                value={jobUrl}
-                onChange={(e) => setJobUrl(e.target.value)}
+                value={linkedinUrl}
+                onChange={(e) => setLinkedinUrl(e.target.value)}
               />
             </div>
-            <div>
-              <label className="text-sm font-medium text-foreground mb-2 block">
-                AI Provider
-              </label>
-              <Select
-                value={aiProvider}
-                onValueChange={(value: "openai" | "gemini") =>
-                  setAiProvider(value)
-                }
-              >
-                <SelectTrigger className="w-full bg-background">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent className="bg-popover border-border">
-                  <SelectItem value="openai">OpenAI (GPT-4o)</SelectItem>
-                  <SelectItem value="gemini">Google Gemini 2.0 Flash</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
+            <Button
+              onClick={handleGenerate}
+              disabled={loadingExtraction || loadingOptimization}
+              className="w-full h-12 text-base font-semibold transition-smooth bg-gradient-primary hover:opacity-90"
+              size="lg"
+            >
+              {loadingExtraction || loadingOptimization ? (
+                <>
+                  <Loader2 className="mr-2 h-5 w-5 animate-spin" />
+                  Running Pipeline...
+                </>
+              ) : (
+                <>
+                  <Link2 className="mr-2 h-5 w-5" />
+                  Generate ATS Summary
+                </>
+              )}
+            </Button>
+          </div>
 
-            {!resume ? (
-              <Button
-                onClick={handleGenerate}
-                disabled={isGenerating}
-                className="w-full h-12 text-base font-semibold transition-smooth bg-gradient-primary hover:opacity-90"
-                size="lg"
-              >
-                {isGenerating ? (
-                  <>
-                    <Loader2 className="mr-2 h-5 w-5 animate-spin" />
-                    Tailoring Resume...
-                  </>
-                ) : (
-                  <>
-                    <Link2 className="mr-2 h-5 w-5" />
-                    Tailor Resume
-                  </>
-                )}
-              </Button>
-            ) : (
-              <div className="space-y-3">
-                <Button
-                  onClick={handleGenerate}
-                  disabled={isGenerating}
-                  className="w-full h-12 text-base font-semibold transition-smooth bg-gradient-primary hover:opacity-90"
-                  size="lg"
-                >
-                  {isGenerating ? (
-                    <>
-                      <Loader2 className="mr-2 h-5 w-5 animate-spin" />
-                      Regenerating...
-                    </>
-                  ) : (
-                    <>
-                      <Link2 className="mr-2 h-5 w-5" />
-                      Regenerate Resume
-                    </>
-                  )}
-                </Button>
-                <Button
-                  onClick={handleReset}
-                  disabled={isGenerating}
-                  variant="outline"
-                  className="w-full h-12 text-base font-semibold transition-smooth border-border hover:bg-secondary/20"
-                  size="lg"
-                >
-                  Clear Output
-                </Button>
+          <div className="mt-6 rounded-lg border border-border bg-muted/30 p-4 space-y-4">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2 text-sm font-medium text-foreground">
+                <span className="h-7 w-7 rounded-full bg-primary/10 text-primary flex items-center justify-center text-xs font-semibold">
+                  1
+                </span>
+                Extracting Job Description
               </div>
+              {renderStatusIcon(extractionStatus)}
+            </div>
+            {extractionError && (
+              <div className="text-xs text-destructive">{extractionError}</div>
             )}
 
-            {jobDetails && (
-              <div className="mt-6 rounded-lg border border-border bg-muted/30 p-4">
-                <div className="flex items-center gap-2 text-sm font-semibold text-foreground mb-2">
-                  <FileText className="h-4 w-4 text-primary" />
-                  Extracted Job Details
-                </div>
-                <div className="text-sm text-muted-foreground space-y-1">
-                  {jobDetails.title && (
-                    <div>
-                      <span className="text-foreground font-medium">Title:</span>{" "}
-                      {jobDetails.title}
-                    </div>
-                  )}
-                  {jobDetails.company && (
-                    <div>
-                      <span className="text-foreground font-medium">
-                        Company:
-                      </span>{" "}
-                      {jobDetails.company}
-                    </div>
-                  )}
-                  {jobDetails.location && (
-                    <div>
-                      <span className="text-foreground font-medium">
-                        Location:
-                      </span>{" "}
-                      {jobDetails.location}
-                    </div>
-                  )}
-                  {jobDetails.description && (
-                    <div className="text-xs text-muted-foreground pt-2">
-                      {jobDetails.description.length > 260
-                        ? `${jobDetails.description.slice(0, 260)}...`
-                        : jobDetails.description}
-                    </div>
-                  )}
-                </div>
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2 text-sm font-medium text-foreground">
+                <span className="h-7 w-7 rounded-full bg-secondary/10 text-secondary flex items-center justify-center text-xs font-semibold">
+                  2
+                </span>
+                Generating Optimized Resume
+              </div>
+              {renderStatusIcon(optimizationStatus)}
+            </div>
+            {optimizationError && (
+              <div className="text-xs text-destructive">
+                {optimizationError}
               </div>
             )}
           </div>
         </Card>
 
-        <Card className="p-6 border bg-card flex flex-col h-full">
-          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-4">
-            <h2 className="text-2xl font-semibold text-foreground">
-              Tailored Resume
-            </h2>
-            {resume && (
-              <div className="flex gap-2">
-                <Select
-                  value={downloadFormat}
-                  onValueChange={(value: any) => setDownloadFormat(value)}
-                >
-                  <SelectTrigger className="w-40 bg-background">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent className="bg-popover border-border">
-                    <SelectItem value="pdf">PDF</SelectItem>
-                    <SelectItem value="docx">Word (.docx)</SelectItem>
-                    <SelectItem value="txt">Text (.txt)</SelectItem>
-                  </SelectContent>
-                </Select>
-                <Button
-                  onClick={handleDownload}
-                  variant="outline"
-                  className="gap-2 border-border hover:bg-secondary/20 transition-smooth"
-                >
-                  <FileDown className="h-4 w-4" />
-                  Download
-                </Button>
-              </div>
-            )}
-          </div>
-          <div className="flex-1 bg-muted/30 rounded-lg p-6 border border-border overflow-y-auto">
-            {resume ? (
-              <Textarea
-                value={resume}
-                onChange={(e) => setResume(e.target.value)}
-                className="h-full min-h-[400px] resize-none border-0 bg-transparent p-0 text-sm font-mono text-foreground focus:ring-0"
-              />
-            ) : (
-              <div className="h-full flex items-center justify-center text-muted-foreground">
-                <div className="text-center space-y-2">
-                  <Sparkles className="w-12 h-12 mx-auto opacity-20" />
-                  <p>Your tailored resume will appear here</p>
+        <Card className="p-6 border bg-card">
+          <h2 className="text-2xl font-semibold mb-4 text-foreground">
+            Pipeline Output
+          </h2>
+          {!jobDescription && !optimizedResume ? (
+            <div className="flex flex-col items-center justify-center h-full text-muted-foreground text-center space-y-2">
+              <Sparkles className="w-12 h-12 mx-auto opacity-20" />
+              <p>Your extracted job data and ATS summary JSON appear here.</p>
+            </div>
+          ) : (
+            <div className="space-y-6">
+              {jobDescription && (
+                <div className="rounded-lg border border-border bg-muted/30 p-4 space-y-3">
+                  <div className="flex items-center gap-2 text-sm font-semibold text-foreground">
+                    <FileText className="h-4 w-4 text-primary" />
+                    Extracted Job Description
+                  </div>
+                  <div className="text-sm text-muted-foreground space-y-2">
+                    <div>
+                      <span className="text-foreground font-medium">Title:</span>{" "}
+                      {jobDescription.jobTitle || "Not specified"}
+                    </div>
+                    <div>
+                      <span className="text-foreground font-medium">
+                        Company:
+                      </span>{" "}
+                      {jobDescription.company || "Not specified"}
+                    </div>
+                    <div>
+                      <span className="text-foreground font-medium">
+                        Responsibilities:
+                      </span>
+                      <ul className="list-disc list-inside mt-1 space-y-1">
+                        {jobDescription.responsibilities.length ? (
+                          jobDescription.responsibilities.map((item) => (
+                            <li key={item}>{item}</li>
+                          ))
+                        ) : (
+                          <li>No responsibilities extracted.</li>
+                        )}
+                      </ul>
+                    </div>
+                    <div>
+                      <span className="text-foreground font-medium">
+                        Required Skills:
+                      </span>
+                      <ul className="list-disc list-inside mt-1 space-y-1">
+                        {jobDescription.requiredSkills.length ? (
+                          jobDescription.requiredSkills.map((item) => (
+                            <li key={item}>{item}</li>
+                          ))
+                        ) : (
+                          <li>No required skills extracted.</li>
+                        )}
+                      </ul>
+                    </div>
+                    <div>
+                      <span className="text-foreground font-medium">
+                        Preferred Qualifications:
+                      </span>
+                      <ul className="list-disc list-inside mt-1 space-y-1">
+                        {jobDescription.preferredQualifications.length ? (
+                          jobDescription.preferredQualifications.map((item) => (
+                            <li key={item}>{item}</li>
+                          ))
+                        ) : (
+                          <li>No preferred qualifications extracted.</li>
+                        )}
+                      </ul>
+                    </div>
+                  </div>
                 </div>
-              </div>
-            )}
-          </div>
+              )}
+
+              {optimizedResume && (
+                <div className="rounded-lg border border-border bg-muted/30 p-4 space-y-3">
+                  <div className="flex items-center gap-2 text-sm font-semibold text-foreground">
+                    <Sparkles className="h-4 w-4 text-primary" />
+                    ATS Candidate Summary
+                  </div>
+                  <pre className="whitespace-pre-wrap text-xs font-mono text-foreground bg-background/60 rounded-md p-3 border border-border overflow-x-auto">
+                    {JSON.stringify(optimizedResume, null, 2)}
+                  </pre>
+                </div>
+              )}
+            </div>
+          )}
         </Card>
       </div>
     </PageShell>
   );
 };
 
-export default JobDescription;
+export default JobDescriptionPage;
