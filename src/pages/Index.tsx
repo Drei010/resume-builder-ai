@@ -1,14 +1,7 @@
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Card } from "@/components/ui/card";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import {
   Loader2,
   FileDown,
@@ -34,12 +27,12 @@ const Index = () => {
   const [jobInfo, setJobInfo] = useState("");
   const [resume, setResume] = useState("");
   const [isGenerating, setIsGenerating] = useState(false);
-  const [aiProvider, setAiProvider] = useState<"gemini" | "openai">("openai");
   const [downloadFormat, setDownloadFormat] = useState<"pdf" | "docx" | "txt">(
     "pdf"
   );
+  const jobInfoRef = useRef<HTMLTextAreaElement>(null);
 
-  const handleGenerate = async () => {
+  const generateResume = async (successMessage: string) => {
     if (!jobInfo.trim()) {
       toast.error("Please enter your job information");
       return;
@@ -52,7 +45,7 @@ const Index = () => {
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({ jobInfo, aiProvider }),
+        body: JSON.stringify({ jobInfo }),
       });
 
       if (!response.ok) {
@@ -62,55 +55,26 @@ const Index = () => {
 
       const data = await response.json();
       setResume(data.resume);
-      toast.success("Resume generated successfully!");
-    } catch (error: any) {
+      toast.success(successMessage);
+    } catch (error) {
       console.error("Error generating resume:", error);
-      toast.error(error.message || "Failed to generate resume");
+      const message =
+        error instanceof Error ? error.message : "Failed to generate resume";
+      toast.error(message);
     } finally {
       setIsGenerating(false);
     }
   };
+
+  const handleGenerate = () => generateResume("Resume generated successfully!");
 
   const handleAddMoreDetails = () => {
     setResume("");
-    // Focus back on job info textarea
-    const textarea = document.querySelector(
-      'textarea[placeholder*="Paste or type"]'
-    ) as HTMLTextAreaElement;
-    if (textarea) textarea.focus();
+    jobInfoRef.current?.focus();
   };
 
-  const handleRegenerateResume = async () => {
-    if (!jobInfo.trim()) {
-      toast.error("Please enter your job information");
-      return;
-    }
-
-    setIsGenerating(true);
-    try {
-      const response = await fetch(API_ENDPOINTS.generateResume, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ jobInfo, aiProvider }),
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || "Failed to generate resume");
-      }
-
-      const data = await response.json();
-      setResume(data.resume);
-      toast.success("Resume regenerated successfully!");
-    } catch (error: any) {
-      console.error("Error regenerating resume:", error);
-      toast.error(error.message || "Failed to regenerate resume");
-    } finally {
-      setIsGenerating(false);
-    }
-  };
+  const handleRegenerateResume = () =>
+    generateResume("Resume regenerated successfully!");
 
   const handleDownload = async () => {
     if (!resume) {
@@ -194,6 +158,7 @@ const Index = () => {
           variant="outline"
           size="icon"
           className="rounded-full bg-background border-border hover:bg-secondary"
+          aria-label={theme === "light" ? "Switch to dark theme" : "Switch to light theme"}
         >
           {theme === "light" ? (
             <Moon className="w-5 h-5" />
@@ -231,32 +196,19 @@ const Index = () => {
               Your Job Information
             </h2>
             <Textarea
+              ref={jobInfoRef}
               placeholder="Paste or type your job details here...&#10;&#10;Example: I admined 16 repositories in GitHub. I supported 3 applications providing technical assistance..."
               value={jobInfo}
               onChange={(e) => setJobInfo(e.target.value)}
               className="min-h-[400px] resize-none text-base border-input focus:border-primary transition-smooth"
+              aria-label="Your job information"
             />
             <div className="mt-6 space-y-4">
-              <div>
-                <label className="text-sm font-medium text-foreground mb-2 block">
-                  AI Provider
-                </label>
-                <Select
-                  value={aiProvider}
-                  onValueChange={(value: "openai" | "gemini") =>
-                    setAiProvider(value)
-                  }
-                >
-                  <SelectTrigger className="w-full bg-background">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent className="bg-popover border-border">
-                    <SelectItem value="openai">OpenAI (GPT-4o)</SelectItem>
-                    <SelectItem value="gemini">
-                      Google Gemini 2.0 Flash
-                    </SelectItem>
-                  </SelectContent>
-                </Select>
+              <div className="rounded-md border border-border bg-background px-4 py-3">
+                <p className="text-sm font-medium text-foreground">AI Model</p>
+                <p className="text-sm text-muted-foreground">
+                  OpenAI GPT-4o-mini — fast, affordable, and optimized for resume generation
+                </p>
               </div>
               {!resume ? (
                 <Button
@@ -321,7 +273,9 @@ const Index = () => {
                 <div className="flex gap-2">
                   <Select
                     value={downloadFormat}
-                    onValueChange={(value: any) => setDownloadFormat(value)}
+                    onValueChange={(value: "pdf" | "docx" | "txt") =>
+                      setDownloadFormat(value)
+                    }
                   >
                     <SelectTrigger className="w-40 bg-background">
                       <SelectValue />
@@ -349,6 +303,7 @@ const Index = () => {
                   value={resume}
                   onChange={(e) => setResume(e.target.value)}
                   className="h-full min-h-[400px] resize-none border-0 bg-transparent p-0 text-sm font-mono text-foreground focus:ring-0"
+                  aria-label="Generated resume preview, editable"
                 />
               ) : (
                 <div className="h-full flex items-center justify-center text-muted-foreground">
