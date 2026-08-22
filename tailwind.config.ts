@@ -62,9 +62,25 @@ export default {
         'smooth': 'var(--transition-smooth)',
       },
       borderRadius: {
+        pill: "980px",
+        panel: "28px",
         lg: "var(--radius)",
         md: "calc(var(--radius) - 2px)",
         sm: "calc(var(--radius) - 4px)",
+      },
+      fontFamily: {
+        sans: ["-apple-system", "BlinkMacSystemFont", '"SF Pro Display"', '"SF Pro Text"', '"Helvetica Neue"', "Arial", "sans-serif"],
+      },
+      fontSize: {
+        hero: ["clamp(3rem, 8vw, 5rem)", { lineHeight: "0.98", letterSpacing: "-0.04em", fontWeight: "600" }],
+        section: ["clamp(2rem, 5vw, 3.5rem)", { lineHeight: "1.05", letterSpacing: "-0.03em", fontWeight: "600" }],
+      },
+      maxWidth: {
+        content: "980px",
+        wide: "1680px",
+      },
+      transitionTimingFunction: {
+        apple: "cubic-bezier(0.28, 0.11, 0.32, 1)",
       },
       keyframes: {
         "accordion-down": {

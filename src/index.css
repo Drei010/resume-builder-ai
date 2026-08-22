@@ -9,75 +9,57 @@ All colors MUST be HSL.
 @layer base {
   :root {
     --background: 0 0% 100%;
-    --foreground: 240 10% 15%;
-
+    --foreground: 240 3% 12%;
     --card: 0 0% 100%;
-    --card-foreground: 240 10% 15%;
-
+    --card-foreground: 240 3% 12%;
     --popover: 0 0% 100%;
-    --popover-foreground: 240 10% 15%;
-
-    --primary: 25 95% 55%;
+    --popover-foreground: 240 3% 12%;
+    --primary: 210 100% 45%;
     --primary-foreground: 0 0% 100%;
-
-    --secondary: 270 60% 65%;
-    --secondary-foreground: 0 0% 100%;
-
-    --muted: 0 0% 96%;
-    --muted-foreground: 240 5% 45%;
-
-    --accent: 270 60% 65%;
+    --secondary: 240 17% 96%;
+    --secondary-foreground: 240 3% 12%;
+    --muted: 240 17% 96%;
+    --muted-foreground: 240 2% 44%;
+    --accent: 210 100% 45%;
     --accent-foreground: 0 0% 100%;
-
-    --destructive: 0 84% 60%;
+    --destructive: 0 72% 51%;
     --destructive-foreground: 0 0% 100%;
-
-    --border: 0 0% 90%;
-    --input: 0 0% 90%;
-    --ring: 25 95% 55%;
-
-    --radius: 0.5rem;
-
-    /* Custom tokens for TalentEdge-AI - flat design with orange/purple */
-    --gradient-primary: linear-gradient(135deg, hsl(25 95% 55%), hsl(270 60% 65%));
-    --gradient-subtle: linear-gradient(180deg, hsl(0 0% 100%), hsl(0 0% 98%));
-    --shadow-sm: 0 1px 2px 0 hsl(240 10% 15% / 0.03);
-    --shadow-md: 0 2px 4px 0 hsl(240 10% 15% / 0.05);
-    --shadow-lg: 0 4px 8px 0 hsl(240 10% 15% / 0.08);
-    --transition-smooth: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    --border: 240 5% 88%;
+    --input: 240 5% 88%;
+    --ring: 210 100% 45%;
+    --radius: 1.25rem;
+    --surface-alt: 240 17% 96%;
+    --gradient-primary: linear-gradient(135deg, hsl(210 100% 45%), hsl(210 100% 58%));
+    --gradient-subtle: linear-gradient(180deg, hsl(0 0% 100%), hsl(240 17% 98%));
+    --shadow-sm: 0 1px 2px hsl(240 3% 12% / 0.04);
+    --shadow-md: 0 8px 24px hsl(240 3% 12% / 0.08);
+    --shadow-lg: 0 20px 50px hsl(240 3% 12% / 0.12);
+    --transition-smooth: all 0.5s cubic-bezier(0.28, 0.11, 0.32, 1);
   }
 
   .dark {
-    --background: 240 15% 10%;
-    --foreground: 0 0% 98%;
-
-    --card: 240 12% 15%;
-    --card-foreground: 0 0% 98%;
-
-    --popover: 240 12% 15%;
-    --popover-foreground: 0 0% 98%;
-
-    --primary: 25 95% 55%;
-    --primary-foreground: 0 0% 100%;
-
-    --secondary: 270 60% 65%;
-    --secondary-foreground: 0 0% 100%;
-
-    --muted: 240 12% 18%;
-    --muted-foreground: 240 5% 60%;
-
-    --accent: 270 60% 65%;
-    --accent-foreground: 0 0% 100%;
-
-    --destructive: 0 63% 31%;
-    --destructive-foreground: 0 0% 98%;
-
-    --border: 240 12% 18%;
-    --input: 240 12% 18%;
-    --ring: 25 95% 55%;
-
-    --gradient-primary: linear-gradient(135deg, hsl(25 95% 55%), hsl(270 60% 65%));
-    --gradient-subtle: linear-gradient(180deg, hsl(240 15% 10%), hsl(240 12% 15%));
+    --background: 0 0% 0%;
+    --foreground: 240 17% 97%;
+    --card: 240 3% 12%;
+    --card-foreground: 240 17% 97%;
+    --popover: 240 3% 12%;
+    --popover-foreground: 240 17% 97%;
+    --primary: 210 100% 58%;
+    --primary-foreground: 0 0% 0%;
+    --secondary: 240 3% 12%;
+    --secondary-foreground: 240 17% 97%;
+    --muted: 240 3% 12%;
+    --muted-foreground: 240 2% 65%;
+    --accent: 210 100% 58%;
+    --accent-foreground: 0 0% 0%;
+    --destructive: 0 62% 40%;
+    --destructive-foreground: 240 17% 97%;
+    --border: 240 3% 22%;
+    --input: 240 3% 22%;
+    --ring: 210 100% 58%;
+    --surface-alt: 240 3% 12%;
+    --gradient-primary: linear-gradient(135deg, hsl(210 100% 58%), hsl(210 100% 45%));
+    --gradient-subtle: linear-gradient(180deg, hsl(0 0% 0%), hsl(240 3% 12%));
   }
 }
 
@@ -86,7 +68,31 @@ All colors MUST be HSL.
     @apply border-border;
   }
 
+  html {
+    scroll-behavior: smooth;
+  }
+
   body {
     @apply bg-background text-foreground;
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", "Helvetica Neue", Arial, sans-serif;
+    font-size: 17px;
+    line-height: 1.47;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  ::selection {
+    background: hsl(var(--primary) / 0.2);
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    html {
+      scroll-behavior: auto;
+    }
+
+    *, *::before, *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+    }
   }
 }

@@ -1,7 +1,14 @@
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Card } from "@/components/ui/card";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import {
   Loader2,
   FileDown,
@@ -24,6 +31,7 @@ import { saveAs } from "file-saver";
 const Index = () => {
   const { theme, toggleTheme } = useTheme();
   const { t, i18n } = useTranslation();
+  const toolRef = useRef<HTMLDivElement>(null);
   const [jobInfo, setJobInfo] = useState("");
   const [resume, setResume] = useState("");
   const [isGenerating, setIsGenerating] = useState(false);
@@ -32,9 +40,18 @@ const Index = () => {
   );
   const jobInfoRef = useRef<HTMLTextAreaElement>(null);
 
+  useEffect(() => {
+    document.documentElement.lang = i18n.language;
+  }, [i18n.language]);
+
+  const focusTool = () => {
+    toolRef.current?.scrollIntoView({ behavior: "smooth" });
+    window.setTimeout(() => jobInfoRef.current?.focus(), 450);
+  };
+
   const generateResume = async (successMessage: string) => {
     if (!jobInfo.trim()) {
-      toast.error("Please enter your job information");
+      toast.error(t("messages.noJobInfo"));
       return;
     }
 
@@ -49,24 +66,26 @@ const Index = () => {
       });
 
       if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || "Failed to generate resume");
+        const errorData = await response.json().catch(() => null);
+        throw new Error(errorData?.error || t("messages.error"));
       }
 
-      const data = await response.json();
+      const data = await response.json().catch(() => {
+        throw new Error(t("messages.error"));
+      });
       setResume(data.resume);
       toast.success(successMessage);
     } catch (error) {
       console.error("Error generating resume:", error);
       const message =
-        error instanceof Error ? error.message : "Failed to generate resume";
+        error instanceof Error ? error.message : t("messages.error");
       toast.error(message);
     } finally {
       setIsGenerating(false);
     }
   };
 
-  const handleGenerate = () => generateResume("Resume generated successfully!");
+  const handleGenerate = () => generateResume(t("messages.success"));
 
   const handleAddMoreDetails = () => {
     setResume("");
@@ -74,11 +93,11 @@ const Index = () => {
   };
 
   const handleRegenerateResume = () =>
-    generateResume("Resume regenerated successfully!");
+    generateResume(t("messages.regenerateSuccess"));
 
   const handleDownload = async () => {
     if (!resume) {
-      toast.error("No resume to download");
+      toast.error(t("messages.noResume"));
       return;
     }
 
@@ -92,7 +111,7 @@ const Index = () => {
       }
     } catch (error) {
       console.error("Error downloading resume:", error);
-      toast.error("Failed to download resume");
+      toast.error(t("messages.downloadError"));
     }
   };
 
@@ -118,7 +137,7 @@ const Index = () => {
       });
 
       doc.save("resume.pdf");
-      toast.success("PDF downloaded successfully!");
+      toast.success(t("messages.downloadPdf"));
     } catch (error) {
       console.error("Error generating PDF:", error);
       throw error;
@@ -131,7 +150,7 @@ const Index = () => {
       const doc = new Document({ sections: [{ children: paragraphs }] });
       const blob = await Packer.toBlob(doc);
       saveAs(blob, "resume.docx");
-      toast.success("Word document downloaded successfully!");
+      toast.success(t("messages.downloadDocx"));
     } catch (error) {
       console.error("Error generating DOCX:", error);
       throw error;
@@ -142,7 +161,7 @@ const Index = () => {
     try {
       const blob = new Blob([resume], { type: "text/plain" });
       saveAs(blob, "resume.txt");
-      toast.success("Text file downloaded successfully!");
+      toast.success(t("messages.downloadTxt"));
     } catch (error) {
       console.error("Error generating TXT:", error);
       throw error;
@@ -150,64 +169,110 @@ const Index = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-subtle">
-      {/* Theme Toggle Button */}
-      <div className="fixed top-4 right-4 z-50">
-        <Button
-          onClick={toggleTheme}
-          variant="outline"
-          size="icon"
-          className="rounded-full bg-background border-border hover:bg-secondary"
-          aria-label={theme === "light" ? "Switch to dark theme" : "Switch to light theme"}
-        >
-          {theme === "light" ? (
-            <Moon className="w-5 h-5" />
-          ) : (
-            <Sun className="w-5 h-5" />
-          )}
-        </Button>
-      </div>
-
-      <div className="container mx-auto px-4 py-12 max-w-6xl">
-        {/* Header */}
-        <div className="text-center mb-12 space-y-4">
-          <div className="inline-flex items-center gap-2 px-4 py-2 bg-primary/10 rounded-full mb-4">
-            <Sparkles className="w-5 h-5 text-primary" />
-            <span className="text-sm font-semibold text-primary tracking-wide">
-              TalentEdge-AI
-            </span>
+    <div className="min-h-screen bg-background text-foreground">
+      <a href="#tool" className="sr-only focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:z-[60] focus:rounded-pill focus:bg-primary focus:px-5 focus:py-3 focus:text-primary-foreground">
+        Skip to resume builder
+      </a>
+      <nav className="sticky top-0 z-50 border-b border-border/70 bg-background/80 backdrop-blur-xl">
+        <div className="fixed top-0 right-0 -z-10 h-0 w-0 overflow-hidden" aria-hidden="true" />
+        <div className="mx-auto flex max-w-wide items-center gap-5 px-4 py-3 sm:px-6 lg:px-10">
+          <a href="#top" className="shrink-0 text-base font-semibold tracking-tight">TalentEdge AI</a>
+          <div className="flex min-w-0 flex-1 snap-x gap-1 overflow-x-auto text-sm text-muted-foreground">
+            <a href="#highlights" className="shrink-0 rounded-pill px-3 py-2 hover:bg-secondary hover:text-foreground">Highlights</a>
+            <a href="#closer-look" className="shrink-0 rounded-pill px-3 py-2 hover:bg-secondary hover:text-foreground">Closer look</a>
+            <a href="#tool" className="shrink-0 rounded-pill px-3 py-2 hover:bg-secondary hover:text-foreground">Builder</a>
           </div>
-          <h1 className="text-5xl md:text-6xl font-bold text-foreground">
-            Transform Your Experience into a{" "}
-            <span className="bg-gradient-primary bg-clip-text text-transparent">
-              Standout Resume
-            </span>
-          </h1>
-          <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
-            Paste your unorganized job details and let AI create an
-            ATS-friendly, Harvard-format resume in seconds
-          </p>
+          <div className="flex shrink-0 items-center gap-2">
+            <select
+              aria-label="Language"
+              value={i18n.language}
+              onChange={(event) => {
+                const language = event.target.value;
+                i18n.changeLanguage(language);
+                localStorage.setItem("language", language);
+                document.documentElement.lang = language;
+              }}
+              className="hidden h-10 rounded-pill border border-border bg-background px-3 text-sm sm:block"
+            >
+              <option value="en">EN</option>
+              <option value="es">ES</option>
+              <option value="tl">TL</option>
+            </select>
+            <Button
+              onClick={toggleTheme}
+              variant="outline"
+              size="icon"
+              className="h-10 w-10 rounded-pill bg-background"
+              data-testid="theme-toggle"
+              aria-label={theme === "light" ? "Switch to dark theme" : "Switch to light theme"}
+            >
+              {theme === "light" ? <Moon className="h-4 w-4" /> : <Sun className="h-4 w-4" />}
+            </Button>
+            <Button onClick={focusTool} className="hidden rounded-pill sm:inline-flex">Create</Button>
+          </div>
         </div>
+      </nav>
 
+      <main id="top">
+        <section className="mx-auto max-w-content px-4 pb-24 pt-24 text-center sm:px-6 sm:pb-32 sm:pt-36 lg:pt-48">
+          <p className="mb-5 text-sm font-semibold uppercase tracking-[0.18em] text-primary">TalentEdge AI</p>
+          <h1 className="mx-auto max-w-4xl text-hero font-semibold text-balance"><span>{t("landing.title")}</span> <span className="text-primary">{t("landing.highlight")}</span></h1>
+          <p className="mx-auto mt-7 max-w-2xl text-lg text-muted-foreground sm:text-xl">{t("landing.description")}</p>
+          <Button onClick={focusTool} size="lg" className="mt-9 min-h-12 rounded-pill px-7">{t("landing.button")} <span aria-hidden="true">↗</span></Button>
+        </section>
+
+        <section id="highlights" className="bg-secondary/70 px-4 py-20 sm:px-6 sm:py-28">
+          <div className="mx-auto max-w-wide">
+            <p className="mb-4 text-sm font-semibold uppercase tracking-[0.18em] text-muted-foreground">01 — {t("landing.highlightsEyebrow")}</p>
+            <h2 className="max-w-3xl text-section">{t("landing.highlightsTitle")}</h2>
+            <div className="mt-12 grid gap-4 md:grid-cols-3">
+              {["aiPowered", "atsFriendly", "instantDownload"].map((feature) => (
+                <Card key={feature} className="rounded-panel border-0 bg-background p-7 shadow-none sm:p-9">
+                  <Sparkles className="mb-12 h-6 w-6 text-primary" />
+                  <h3 className="text-2xl font-semibold tracking-tight">{t(`features.${feature}.title`)}</h3>
+                  <p className="mt-3 text-muted-foreground">{t(`features.${feature}.description`)}</p>
+                </Card>
+              ))}
+            </div>
+          </div>
+        </section>
+
+        <section id="closer-look" className="px-4 py-20 sm:px-6 sm:py-32">
+          <div className="mx-auto max-w-content">
+            <p className="mb-4 text-sm font-semibold uppercase tracking-[0.18em] text-muted-foreground">02 — {t("landing.closerEyebrow")}</p>
+            <h2 className="max-w-3xl text-section">{t("landing.closerTitle")}</h2>
+            <div className="mt-14 divide-y divide-border border-y border-border">
+              {(t("landing.closerItems", { returnObjects: true }) as string[]).map((title, index) => (
+                <div key={title} className="grid gap-4 py-8 sm:grid-cols-[100px_1fr] sm:py-10">
+                  <span className="text-sm font-semibold text-primary">0{index + 1}</span>
+                  <div><h3 className="text-2xl font-semibold tracking-tight">{title}</h3><p className="mt-2 max-w-xl text-muted-foreground">{t("landing.closerDescription")}</p></div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </section>
+
+        <div ref={toolRef} id="tool" className="scroll-mt-20 bg-secondary/70">
+          <div className="container mx-auto max-w-6xl px-4 py-16 sm:px-6 sm:py-24">
+            <p className="mb-3 text-sm font-semibold uppercase tracking-[0.18em] text-muted-foreground">03 — {t("landing.toolEyebrow")}</p>
+            <h2 className="mb-10 text-section">{t("landing.toolTitle")}</h2>
         {/* Input Section */}
         <div className="grid lg:grid-cols-2 gap-8 mb-8">
-          <Card className="p-6 border bg-card">
-            <h2 className="text-2xl font-semibold mb-4 text-foreground">
-              Your Job Information
-            </h2>
+          <Card className="rounded-panel border-border/70 bg-card p-5 shadow-md">
+            <h2 className="mb-4 text-2xl font-semibold tracking-tight text-foreground">{t("input.label")}</h2>
             <Textarea
               ref={jobInfoRef}
-              placeholder="Paste or type your job details here...&#10;&#10;Example: I admined 16 repositories in GitHub. I supported 3 applications providing technical assistance..."
+              placeholder={t("input.placeholder")}
               value={jobInfo}
               onChange={(e) => setJobInfo(e.target.value)}
-              className="min-h-[400px] resize-none text-base border-input focus:border-primary transition-smooth"
-              aria-label="Your job information"
+              className="min-h-[400px] resize-none rounded-2xl border-input bg-background text-base focus:border-primary transition-smooth"
+              aria-label={t("input.label")}
             />
             <div className="mt-6 space-y-4">
-              <div className="rounded-md border border-border bg-background px-4 py-3">
-                <p className="text-sm font-medium text-foreground">AI Model</p>
+              <div className="rounded-2xl border border-border bg-background px-4 py-3">
+                <p className="text-sm font-medium text-foreground">{t("input.provider")}</p>
                 <p className="text-sm text-muted-foreground">
-                  OpenAI GPT-4o-mini — fast, affordable, and optimized for resume generation
+                  {t("input.openai")}
                 </p>
               </div>
               {!resume ? (
@@ -220,12 +285,12 @@ const Index = () => {
                   {isGenerating ? (
                     <>
                       <Loader2 className="mr-2 h-5 w-5 animate-spin" />
-                      Generating Resume...
+                      {t("input.generatingBtn")}
                     </>
                   ) : (
                     <>
                       <Sparkles className="mr-2 h-5 w-5" />
-                      Generate Resume
+                      {t("input.generateBtn")}
                     </>
                   )}
                 </Button>
@@ -240,12 +305,12 @@ const Index = () => {
                     {isGenerating ? (
                       <>
                         <Loader2 className="mr-2 h-5 w-5 animate-spin" />
-                        Regenerating...
+                        {t("input.regeneratingBtn")}
                       </>
                     ) : (
                       <>
                         <Sparkles className="mr-2 h-5 w-5" />
-                        Regenerate Resume
+                        {t("input.regenerateBtn")}
                       </>
                     )}
                   </Button>
@@ -256,7 +321,7 @@ const Index = () => {
                     className="w-full h-12 text-base font-semibold transition-smooth border-border hover:bg-secondary/20"
                     size="lg"
                   >
-                    Add More Details
+                    {t("input.addDetailsBtn")}
                   </Button>
                 </div>
               )}
@@ -264,10 +329,10 @@ const Index = () => {
           </Card>
 
           {/* Preview Section */}
-          <Card className="p-6 border bg-card flex flex-col h-full">
+          <Card className="rounded-panel border-border/70 bg-card p-5 shadow-md flex flex-col h-full">
             <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-4">
-              <h2 className="text-2xl font-semibold text-foreground">
-                Resume Preview
+              <h2 className="text-2xl font-semibold tracking-tight text-foreground">
+                {t("preview.label")}
               </h2>
               {resume && (
                 <div className="flex gap-2">
@@ -281,9 +346,9 @@ const Index = () => {
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent className="bg-popover border-border">
-                      <SelectItem value="pdf">PDF</SelectItem>
-                      <SelectItem value="docx">Word (.docx)</SelectItem>
-                      <SelectItem value="txt">Text (.txt)</SelectItem>
+                      <SelectItem value="pdf">{t("preview.format.pdf")}</SelectItem>
+                      <SelectItem value="docx">{t("preview.format.docx")}</SelectItem>
+                      <SelectItem value="txt">{t("preview.format.txt")}</SelectItem>
                     </SelectContent>
                   </Select>
                   <Button
@@ -292,7 +357,7 @@ const Index = () => {
                     className="gap-2 border-border hover:bg-secondary/20 transition-smooth"
                   >
                     <FileDown className="h-4 w-4" />
-                    Download
+                    {t("preview.downloadBtn")}
                   </Button>
                 </div>
               )}
@@ -303,66 +368,17 @@ const Index = () => {
                   value={resume}
                   onChange={(e) => setResume(e.target.value)}
                   className="h-full min-h-[400px] resize-none border-0 bg-transparent p-0 text-sm font-mono text-foreground focus:ring-0"
-                  aria-label="Generated resume preview, editable"
+                  aria-label={t("preview.label")}
                 />
               ) : (
                 <div className="h-full flex items-center justify-center text-muted-foreground">
                   <div className="text-center space-y-2">
                     <Sparkles className="w-12 h-12 mx-auto opacity-20" />
-                    <p>Your AI-generated resume will appear here</p>
+                    <p>{t("preview.placeholder")}</p>
                   </div>
                 </div>
               )}
             </div>
-          </Card>
-        </div>
-
-        {/* Features */}
-        <div className="grid md:grid-cols-3 gap-6 mt-12">
-          <Card className="p-6 text-center border bg-card hover:border-primary/30 transition-smooth">
-            <div className="w-14 h-14 bg-primary/10 rounded-2xl flex items-center justify-center mx-auto mb-4">
-              <Sparkles className="w-7 h-7 text-primary" />
-            </div>
-            <h3 className="font-semibold mb-2 text-foreground text-lg">
-              AI-Powered
-            </h3>
-            <p className="text-sm text-muted-foreground">
-              Advanced AI transforms your raw data into polished content
-            </p>
-          </Card>
-          <Card className="p-6 text-center border bg-card hover:border-secondary/30 transition-smooth">
-            <div className="w-14 h-14 bg-secondary/10 rounded-2xl flex items-center justify-center mx-auto mb-4">
-              <svg
-                className="w-7 h-7 text-secondary"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
-                />
-              </svg>
-            </div>
-            <h3 className="font-semibold mb-2 text-foreground text-lg">
-              ATS-Friendly
-            </h3>
-            <p className="text-sm text-muted-foreground">
-              Optimized to pass Applicant Tracking Systems
-            </p>
-          </Card>
-          <Card className="p-6 text-center border bg-card hover:border-primary/30 transition-smooth">
-            <div className="w-14 h-14 bg-primary/10 rounded-2xl flex items-center justify-center mx-auto mb-4">
-              <FileDown className="w-7 h-7 text-primary" />
-            </div>
-            <h3 className="font-semibold mb-2 text-foreground text-lg">
-              Instant Download
-            </h3>
-            <p className="text-sm text-muted-foreground">
-              Export your resume as PDF with one click
-            </p>
           </Card>
         </div>
 
@@ -396,7 +412,17 @@ const Index = () => {
             </a>
           </div>
         </div>
-      </div>
+          </div>
+        </div>
+        <footer className="mt-20 flex flex-col gap-5 border-t border-border pt-8 text-sm text-muted-foreground sm:flex-row sm:items-center sm:justify-between">
+          <p>TalentEdge AI<span className="align-super text-[10px]">®</span> — Your experience, clearly expressed.</p>
+          <div className="flex items-center gap-5">
+            <a href={SOCIAL_LINKS.linkedin} target="_blank" rel="noopener noreferrer" className="hover:text-foreground">LinkedIn</a>
+            <a href={SOCIAL_LINKS.github} target="_blank" rel="noopener noreferrer" className="hover:text-foreground">GitHub</a>
+            <a href={`mailto:${SOCIAL_LINKS.email}`} className="hover:text-foreground">Email</a>
+          </div>
+        </footer>
+      </main>
     </div>
   );
 };

@@ -4,7 +4,15 @@
     "title": "Transforma Tu Experiencia en un",
     "highlight": "Currículum Destacado",
     "description": "Pega tus detalles de trabajo desorganizados y deja que la IA cree un currículum en formato Harvard optimizado para ATS en segundos",
-    "button": "Crear Ahora"
+    "button": "Crear Ahora",
+    "highlightsEyebrow": "Destacados",
+    "highlightsTitle": "Una forma más clara de mostrar tu trabajo.",
+    "closerEyebrow": "Más de cerca",
+    "closerTitle": "Pensado desde el primer borrador hasta la descarga final.",
+    "closerItems": ["Empieza con lo que sabes", "Da forma a la historia", "Hazlo tuyo"],
+    "closerDescription": "Convierte tu experiencia desordenada en un texto claro, honesto y compatible con ATS que sigue sonando a ti.",
+    "toolEyebrow": "El creador",
+    "toolTitle": "Crea algo que se sienta como tú."
   },
   "header": {
     "title": "Transforma Tu Experiencia en un",

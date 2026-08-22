@@ -1,53 +1,71 @@
 {
   "landing": {
+    "logo": "TalentEdge-AI",
     "title": "Baguhin ang Iyong Karanasan sa",
-    "titleHighlight": "Kahanga-hangang Resume",
+    "highlight": "Kahanga-hangang Resume",
     "description": "Ipasok ang iyong hindi organisa na detalye ng trabaho at hayaan ang AI na lumikha ng ATS-friendly, Harvard-format na resume sa loob ng ilang segundo",
-    "createNow": "Lumikha Ngayon"
+    "button": "Lumikha Ngayon",
+    "highlightsEyebrow": "Mga Tampok",
+    "highlightsTitle": "Mas malinaw na paraan upang maipakita ang iyong trabaho.",
+    "closerEyebrow": "Masusing tingin",
+    "closerTitle": "Maingat mula sa unang draft hanggang sa huling download.",
+    "closerItems": ["Magsimula sa iyong alam", "Ayusin ang kuwento", "Gawin itong iyo"],
+    "closerDescription": "Gawing malinaw, tapat, at ATS-friendly na pagsulat ang iyong hindi organisadong karanasan habang nananatiling ikaw ang tunog nito.",
+    "toolEyebrow": "Ang builder",
+    "toolTitle": "Bumuo ng resume na tunay na ikaw."
   },
   "header": {
     "title": "Baguhin ang Iyong Karanasan sa",
-    "titleHighlight": "Kahanga-hangang Resume",
+    "highlight": "Kahanga-hangang Resume",
     "description": "Ipasok ang iyong hindi organisa na detalye ng trabaho at hayaan ang AI na lumikha ng ATS-friendly, Harvard-format na resume sa loob ng ilang segundo"
   },
   "input": {
     "label": "Ang Iyong Impormasyon sa Trabaho",
-    "placeholder": "Ipasok o i-type ang iyong mga detalye ng trabaho dito...&#10;&#10;Halimbawa: “Ako si Kyle, isang front end developer. Gumagawa ako ng mga app gamit ang JavaScript. May dalawang taon na akong karanasan at gusto kong maging full-stack developer.",
-    "aiProvider": "AI Provider",
+    "placeholder": "Ipasok o i-type ang iyong mga detalye ng trabaho dito...\n\nHalimbawa: \u201cAko si Kyle, isang front end developer. Gumagawa ako ng mga app gamit ang JavaScript. May dalawang taon na akong karanasan at gusto kong maging full-stack developer.",
+    "provider": "AI Provider",
     "gemini": "Google Gemini 2.0 Flash",
     "openai": "OpenAI (GPT-4o)",
-    "generate": "Lumikha ng Resume",
-    "generating": "Lumilikha ng Resume...",
-    "regenerate": "Likhain Muli ang Resume",
-    "regenerating": "Sinusulat Muli...",
-    "addMore": "Magdagdag ng Mas Maraming Detalye"
+    "generateBtn": "Lumikha ng Resume",
+    "generatingBtn": "Lumilikha ng Resume...",
+    "regenerateBtn": "Likhain Muli ang Resume",
+    "regeneratingBtn": "Sinusulat Muli...",
+    "addDetailsBtn": "Magdagdag ng Mas Maraming Detalye"
   },
   "preview": {
     "label": "Preview ng Resume",
-    "empty": "Ang iyong AI-generated na resume ay lalabas dito",
-    "pdf": "PDF",
-    "docx": "Word (.docx)",
-    "txt": "Text (.txt)",
-    "download": "I-download"
+    "format": {
+      "pdf": "PDF",
+      "docx": "Word (.docx)",
+      "txt": "Text (.txt)"
+    },
+    "downloadBtn": "I-download",
+    "placeholder": "Ang iyong AI-generated na resume ay lalabas dito"
   },
   "features": {
-    "aiPowered": "AI-Powered",
-    "aiPoweredDesc": "Advanced AI ang nagbabago ng iyong raw data sa refined na nilalaman",
-    "atsFriendly": "ATS-Friendly",
-    "atsFriendlyDesc": "Optimized na pumasa sa Applicant Tracking Systems",
-    "instantDownload": "Instant Download",
-    "instantDownloadDesc": "I-export ang iyong resume bilang PDF sa isang click"
+    "aiPowered": {
+      "title": "AI-Powered",
+      "description": "Advanced AI ang nagbabago ng iyong raw data sa refined na nilalaman"
+    },
+    "atsFriendly": {
+      "title": "ATS-Friendly",
+      "description": "Optimized na pumasa sa Applicant Tracking Systems"
+    },
+    "instantDownload": {
+      "title": "Instant Download",
+      "description": "I-export ang iyong resume bilang PDF sa isang click"
+    }
   },
   "messages": {
-    "errorNoJobInfo": "Mangyaring pumasok ang iyong impormasyon sa trabaho",
-    "errorGenerate": "Nabigo ang paglikha ng resume",
-    "successGenerate": "Matagumpay na nalikha ang resume!",
-    "errorDownload": "Nabigo ang pag-download ng resume",
-    "successPdf": "Matagumpay na na-download ang PDF!",
-    "successDocx": "Matagumpay na na-download ang Word document!",
-    "successTxt": "Matagumpay na na-download ang text file!",
-    "errorNoResume": "Walang resume na i-download",
-    "successRegenerate": "Matagumpay na sinulat muli ang resume!",
-    "errorRegenerate": "Nabigo ang pag-sulat muli ng resume"
+    "noJobInfo": "Mangyaring pumasok ang iyong impormasyon sa trabaho",
+    "generating": "Lumilikha...",
+    "success": "Matagumpay na nalikha ang resume!",
+    "regenerateSuccess": "Matagumpay na sinulat muli ang resume!",
+    "error": "Nabigo ang paglikha ng resume",
+    "regenerateError": "Nabigo ang pag-sulat muli ng resume",
+    "noResume": "Walang resume na i-download",
+    "downloadPdf": "Matagumpay na na-download ang PDF!",
+    "downloadDocx": "Matagumpay na na-download ang Word document!",
+    "downloadTxt": "Matagumpay na na-download ang text file!",
+    "downloadError": "Nabigo ang pag-download ng resume"
   }
 }

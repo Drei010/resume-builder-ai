@@ -31,3 +31,9 @@ dist-ssr
 /playwright-report/
 /e2e/screenshots/
 /blob-report/
+
+# Kiro CLI / agent tooling (local dev config, not app code)
+.kiro/
+.github/agents/
+.github/skills/
+.github/hooks/

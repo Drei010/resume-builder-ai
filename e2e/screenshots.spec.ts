@@ -2,10 +2,9 @@ import { test, expect } from "@playwright/test";
 
 test.describe("resume builder screenshots", () => {
   test("empty state - light theme", async ({ page }) => {
-    await page.goto("/");
-    await expect(
-      page.getByRole("heading", { name: /Transform Your Experience/i })
-    ).toBeVisible();
+    await page.goto("/", { waitUntil: "domcontentloaded" });
+    await page.locator("#root").waitFor({ state: "visible" });
+    await expect(page.locator("h1")).toBeVisible();
     await page.screenshot({
       path: "e2e/screenshots/views/empty-state-light.png",
       fullPage: true,
@@ -13,8 +12,9 @@ test.describe("resume builder screenshots", () => {
   });
 
   test("dark theme toggle", async ({ page }) => {
-    await page.goto("/");
-    const themeToggle = page.locator("div.fixed.top-4.right-4 button");
+    await page.goto("/", { waitUntil: "domcontentloaded" });
+    await page.locator("#root").waitFor({ state: "visible" });
+    const themeToggle = page.getByTestId("theme-toggle");
     await themeToggle.click();
     // wait for the theme transition to settle before capturing
     await page.waitForTimeout(400);
@@ -25,7 +25,8 @@ test.describe("resume builder screenshots", () => {
   });
 
   test("generate resume flow", async ({ page }) => {
-    await page.goto("/");
+    await page.goto("/", { waitUntil: "domcontentloaded" });
+    await page.locator("#root").waitFor({ state: "visible" });
 
     await page
       .getByPlaceholder(/Paste or type your job details here/i)

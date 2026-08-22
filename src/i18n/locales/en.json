@@ -4,7 +4,15 @@
     "title": "Transform Your Experience into a",
     "highlight": "Standout Resume",
     "description": "Paste your unorganized job details and let AI create an ATS-friendly, Harvard-format resume in seconds",
-    "button": "Create Now"
+    "button": "Create Now",
+    "highlightsEyebrow": "Highlights",
+    "highlightsTitle": "A clearer way to show your work.",
+    "closerEyebrow": "Closer look",
+    "closerTitle": "Thoughtful from first draft to final download.",
+    "closerItems": ["Start with what you know", "Shape the story", "Make it yours"],
+    "closerDescription": "Turn unstructured experience into clear, honest, ATS-friendly writing that still sounds like you.",
+    "toolEyebrow": "The builder",
+    "toolTitle": "Build something that feels like you."
   },
   "header": {
     "title": "Transform Your Experience into a",
