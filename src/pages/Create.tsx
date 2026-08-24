@@ -37,7 +37,7 @@ export default function Create() {
     setStep((s) => Math.min(5, s + 1));
   };
 
-  const back = () => setStep((s) => Math.max(0, s - 1));
+  const back = () => setStep((s) => s === 5 ? 3 : Math.max(0, s - 1));
 
   const updateCompanies = (next: Company[]) => { setCompanies(next); saveCompanies(next); };
   const updateEntries   = (next: WorkEntry[]) => { setEntries(next); saveEntries(next); };

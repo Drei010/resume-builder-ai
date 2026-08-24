@@ -1,7 +1,7 @@
 import { ChevronLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
-const STEP_LABELS = ["Start", "Profile", "Work library", "Job description", "Generating", "Preview"];
+const STEP_LABELS = ["Start", "Profile", "Work library", "Job description", "Preview"];
 
 export function WizardNav({ step, onBack }: { step: number; onBack: () => void }) {
   return (

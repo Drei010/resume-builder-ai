@@ -2,7 +2,7 @@ import { useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Textarea } from "@/components/ui/textarea";
-import { Loader2, Upload, Wand2 } from "lucide-react";
+import { Loader2, Linkedin, Upload, Wand2 } from "lucide-react";
 import { extractResumeText } from "@/lib/resume-text-extract";
 import { API_ENDPOINTS } from "@/lib/api-config";
 import { AiLoader } from "@/components/AiLoader";
@@ -26,6 +26,7 @@ export function StepStart({
   onSavedResume: (resume: string) => void;
 }) {
   const [paste, setPaste] = useState("");
+  const [linkedinText, setLinkedinText] = useState("");
   const [savedResumes] = useState<SavedResume[]>(loadSavedResumes);
   const [fileName, setFileName] = useState("");
   const [busy, setBusy] = useState(false);
@@ -79,7 +80,7 @@ export function StepStart({
         </p>
       </div>
 
-      <div className="grid gap-4 md:grid-cols-2">
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
         {/* Start fresh */}
         <Card className="flex flex-col rounded-panel border-border/70 p-7 shadow-none">
           <h2 className="text-2xl font-semibold tracking-tight">Start fresh</h2>
@@ -92,6 +93,33 @@ export function StepStart({
             data-testid="start-fresh"
           >
             Start fresh ↗
+          </Button>
+        </Card>
+
+        {/* Import LinkedIn profile */}
+        <Card className="flex flex-col rounded-panel border-border/70 p-7 shadow-none">
+          <div className="flex items-center gap-3">
+            <div className="flex h-10 w-10 items-center justify-center rounded-full bg-[#0a66c2]/10 text-[#0a66c2]">
+              <Linkedin className="h-5 w-5" aria-hidden="true" />
+            </div>
+            <h2 className="text-2xl font-semibold tracking-tight">Import LinkedIn profile</h2>
+          </div>
+          <p className="mt-3 flex-1 text-muted-foreground">
+            Copy your LinkedIn profile content and paste it here. We'll organize it into your profile and work history.
+          </p>
+          <Textarea
+            aria-label="LinkedIn profile text"
+            placeholder="Paste your LinkedIn About and Experience sections here..."
+            value={linkedinText}
+            onChange={(e) => setLinkedinText(e.target.value)}
+            className="mt-5 min-h-28 resize-none rounded-2xl bg-background"
+          />
+          <Button
+            className="mt-4 w-full rounded-pill"
+            disabled={busy || !linkedinText.trim()}
+            onClick={() => parse(linkedinText)}
+          >
+            {busy ? <AiLoader message="Importing your LinkedIn profile…" /> : <><Linkedin className="mr-2 h-4 w-4" /> Import profile</>}
           </Button>
         </Card>
 
