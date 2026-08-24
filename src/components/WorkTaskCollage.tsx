@@ -91,7 +91,7 @@ export function WorkTaskCollage({
             <div className="relative mx-auto w-full max-w-wide overflow-hidden rounded-[2rem] bg-transparent p-2" style={{ height: "clamp(420px, 52vw, 560px)" }}>
               <div data-collage-stack className="absolute inset-0 flex gap-3 overflow-hidden px-2 sm:gap-4 sm:px-4" aria-hidden="true">
                 {columnCards.map((cards, column) => (
-                  <div key={`column-${column}`} data-collage-column className="min-w-0 flex-1 overflow-hidden [mask-image:linear-gradient(to_bottom,transparent,black_12%,black_88%,transparent)]">
+                  <div key={`column-${column}`} data-collage-column className={`min-w-0 flex-1 overflow-hidden [mask-image:linear-gradient(to_bottom,transparent,black_12%,black_88%,transparent)] ${column === 2 ? "hidden md:flex" : column === 3 ? "hidden lg:flex" : ""}`}>
                     <div data-collage-track className={`flex flex-col gap-3 sm:gap-4 ${reducedMotion ? "" : column % 2 ? "work-library-track-down" : "work-library-track-up"}`} style={{ animationDuration: `${58 + column * 5}s` }}>
                       {[...cards, ...cards].map((card, index) => (
                         <Card key={`${card.id}-${column}-${index}`} className={`shrink-0 overflow-hidden border-0 bg-card/95 p-4 shadow-lg sm:p-5 ${reducedMotion ? "" : "transition-shadow duration-300 hover:shadow-xl"}`}>

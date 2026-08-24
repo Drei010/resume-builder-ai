@@ -47,6 +47,15 @@ test.describe("work database", () => {
     await page.locator("#work-database").screenshot({ path: "e2e/screenshots/views/work-collage-dark-grid.png" });
   });
 
+  test("uses two, three, and four carousel columns responsively", async ({ page }) => {
+    await page.setViewportSize({ width: 375, height: 800 });
+    await expect(page.locator("[data-collage-column]:visible")).toHaveCount(2);
+    await page.setViewportSize({ width: 800, height: 800 });
+    await expect(page.locator("[data-collage-column]:visible")).toHaveCount(3);
+    await page.setViewportSize({ width: 1280, height: 800 });
+    await expect(page.locator("[data-collage-column]:visible")).toHaveCount(4);
+  });
+
   test("reduced motion keeps the expanded grid usable", async ({ page }) => {
     await page.emulateMedia({ reducedMotion: "reduce" });
     await page.getByTestId("modify-work-tasks").click();
