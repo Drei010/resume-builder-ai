@@ -5,6 +5,7 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { Analytics } from "@vercel/analytics/react";
 import Index from "./pages/Index";
 import Create from "./pages/Create";
+import HowItWorks from "./pages/HowItWorks";
 import NotFound from "./pages/NotFound";
 
 const App = () => (
@@ -16,6 +17,8 @@ const App = () => (
       <Routes>
         <Route path="/" element={<Index />} />
         <Route path="/create" element={<Create />} />
+        <Route path="/resume-from-your-story" element={<HowItWorks />} />
+        <Route path="/how-it-works" element={<HowItWorks />} />
         {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
         <Route path="*" element={<NotFound />} />
       </Routes>

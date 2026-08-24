@@ -1,6 +1,6 @@
-import type { ReactNode } from "react";
+import { useState, type ReactNode } from "react";
 import { Link } from "react-router-dom";
-import { Moon, Sun } from "lucide-react";
+import { Moon, Sun, Menu, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useTheme } from "@/contexts/ThemeContext";
 import { useTranslation } from "react-i18next";
@@ -14,6 +14,7 @@ type AppHeaderProps = {
 
 export function AppHeader({ center, right }: AppHeaderProps) {
   const { theme, toggleTheme } = useTheme();
+  const [menuOpen, setMenuOpen] = useState(false);
   const { i18n } = useTranslation();
 
   return (
@@ -25,12 +26,12 @@ export function AppHeader({ center, right }: AppHeaderProps) {
         </Link>
 
         {/* Center slot — nav links or empty spacer */}
-        <div className="flex min-w-0 flex-1 snap-x gap-1 overflow-x-auto text-sm text-muted-foreground">
+        <div className="hidden min-w-0 flex-1 items-center justify-center gap-1 text-sm text-muted-foreground sm:flex">
           {center}
         </div>
 
         {/* Shared right controls */}
-        <div className="flex shrink-0 items-center gap-2">
+        <div className="ml-auto flex shrink-0 items-center gap-2 sm:ml-0">
           <select
             aria-label="Language"
             value={i18n.language}
@@ -59,8 +60,25 @@ export function AppHeader({ center, right }: AppHeaderProps) {
 
           {/* Page-specific right slot */}
           {right}
+          <Button
+            onClick={() => setMenuOpen((open) => !open)}
+            variant="outline"
+            size="icon"
+            className="h-10 w-10 rounded-pill bg-background sm:hidden"
+            aria-label={menuOpen ? "Close navigation menu" : "Open navigation menu"}
+            aria-expanded={menuOpen}
+          >
+            {menuOpen ? <X className="h-4 w-4" /> : <Menu className="h-4 w-4" />}
+          </Button>
         </div>
       </div>
+      {menuOpen && (
+        <div className="border-t border-border/70 px-4 pb-4 pt-2 sm:hidden">
+          <div className="flex flex-col gap-1 text-sm text-muted-foreground" onClick={() => setMenuOpen(false)}>
+            {center}
+          </div>
+        </div>
+      )}
     </nav>
   );
 }
