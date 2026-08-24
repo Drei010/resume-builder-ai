@@ -11,6 +11,11 @@
     "closerTitle": "Thoughtful from first draft to final download.",
     "closerItems": ["Start with what you know", "Shape the story", "Make it yours"],
     "closerDescription": "Turn unstructured experience into clear, honest, ATS-friendly writing that still sounds like you.",
+    "closerDescriptions": [
+      "Paste in the raw tasks, wins, and responsibilities from your work history — nothing polished needed.",
+      "The AI picks the most relevant proof for the job description and rewrites it as tight, action-led bullets.",
+      "Edit the preview inline, download in the format you need, and send it with confidence."
+    ],
     "toolEyebrow": "The builder",
     "toolTitle": "Build something that feels like you."
   },

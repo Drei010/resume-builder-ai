@@ -1,294 +1,353 @@
-import { useMemo, useState } from "react";
-import type { ReactNode } from "react";
-import { FileDown, Loader2, Plus, Sparkles, Trash2 } from "lucide-react";
+import { useMemo, useState, type ReactNode } from "react";
+import { Plus, Trash2, Loader2, FileDown, Sparkles } from "lucide-react";
 import { toast } from "sonner";
-import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
+import {
+  AlertDialog, AlertDialogAction, AlertDialogCancel,
+  AlertDialogContent, AlertDialogDescription, AlertDialogFooter,
+  AlertDialogHeader, AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import {
+  Dialog, DialogContent, DialogDescription,
+  DialogFooter, DialogHeader, DialogTitle,
+} from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import {
+  Select, SelectContent, SelectItem,
+  SelectTrigger, SelectValue,
+} from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { API_ENDPOINTS } from "@/lib/api-config";
 import { downloadDocx, downloadPDF, downloadTxt } from "@/lib/resume-export";
-import { createCompany, createEntry, groupEntriesByCompany, isValidMonth, loadCompanies, loadEntries, saveCompanies, saveEntries, type Company, type CompanyGroup, type WorkEntry } from "@/lib/work-db";
+import {
+  createCompany, createEntry, groupEntriesByCompany,
+  isValidMonth, loadCompanies, loadEntries,
+  saveCompanies, saveEntries,
+  type Company, type WorkEntry,
+} from "@/lib/work-db";
 import { WorkTaskCollage } from "./WorkTaskCollage";
 
 const MAX_TASK_LENGTH = 2000;
 type DownloadFormat = "pdf" | "docx" | "txt";
 
-type EntryDraft = {
-  companyId: string;
-  startMonth: string;
-  endMonth: string;
-  isPresent: boolean;
-  task: string;
-};
+// ─── Company form state ───────────────────────────────────────────────────────
+type CompanyDraft = { name: string; jobTitle: string; location: string };
+const emptyCompanyDraft = (): CompanyDraft => ({ name: "", jobTitle: "", location: "" });
 
+// ─── Entry form state ─────────────────────────────────────────────────────────
+type EntryDraft = {
+  companyId: string; startMonth: string;
+  endMonth: string; isPresent: boolean; task: string;
+};
 const emptyEntryDraft = (companyId = ""): EntryDraft => ({
-  companyId,
-  startMonth: "",
-  endMonth: "",
-  isPresent: true,
-  task: "",
+  companyId, startMonth: "", endMonth: "", isPresent: true, task: "",
 });
 
 export function WorkDatabaseSection() {
-  const [companies, setCompanies] = useState<Company[]>(() => loadCompanies());
-  const [entries, setEntries] = useState<WorkEntry[]>(() => loadEntries());
+  const [companies, setCompanies] = useState<Company[]>(loadCompanies);
+  const [entries, setEntries] = useState<WorkEntry[]>(loadEntries);
+
+  // Company dialog — single dialog handles both add and edit
   const [companyDialogOpen, setCompanyDialogOpen] = useState(false);
-  const [companiesDialogOpen, setCompaniesDialogOpen] = useState(false);
   const [editingCompanyId, setEditingCompanyId] = useState<string | null>(null);
-  const [companyName, setCompanyName] = useState("");
-  const [jobTitle, setJobTitle] = useState("");
-  const [location, setLocation] = useState("");
+  const [companyDraft, setCompanyDraft] = useState<CompanyDraft>(emptyCompanyDraft);
   const [deleteCompanyId, setDeleteCompanyId] = useState<string | null>(null);
-  const [entryDialogOpen, setEntryDialogOpen] = useState(false);
+
+  // Entry form — inline card, not a dialog
+  const [entryFormOpen, setEntryFormOpen] = useState(false);
   const [editingEntryId, setEditingEntryId] = useState<string | null>(null);
-  const [entryDraft, setEntryDraft] = useState<EntryDraft>(emptyEntryDraft());
+  const [entryDraft, setEntryDraft] = useState<EntryDraft>(emptyEntryDraft);
+
+  // JD tailoring
   const [jobDescription, setJobDescription] = useState("");
   const [tailoredResume, setTailoredResume] = useState("");
   const [isTailoring, setIsTailoring] = useState(false);
   const [downloadFormat, setDownloadFormat] = useState<DownloadFormat>("pdf");
 
   const groups = useMemo(() => groupEntriesByCompany(companies, entries), [companies, entries]);
-  const totalEntries = entries.length;
 
-  const persistCompanies = (next: Company[]) => {
-    setCompanies(next);
-    saveCompanies(next);
-  };
+  // ── Persistence helpers ────────────────────────────────────────────────────
+  const persistCompanies = (next: Company[]) => { setCompanies(next); saveCompanies(next); };
+  const persistEntries   = (next: WorkEntry[]) => { setEntries(next); saveEntries(next); };
 
-  const persistEntries = (next: WorkEntry[]) => {
-    setEntries(next);
-    saveEntries(next);
-  };
-
+  // ── Company CRUD ───────────────────────────────────────────────────────────
   const openCompanyDialog = (company?: Company) => {
     setEditingCompanyId(company?.id ?? null);
-    setCompanyName(company?.name ?? "");
-    setJobTitle(company?.jobTitle ?? "");
-    setLocation(company?.location ?? "");
+    setCompanyDraft({ name: company?.name ?? "", jobTitle: company?.jobTitle ?? "", location: company?.location ?? "" });
     setCompanyDialogOpen(true);
   };
 
-  const saveCompanyForm = () => {
-    const name = companyName.trim();
-    const title = jobTitle.trim();
-    if (!name || !title) {
-      toast.error("Company name and job title are required.");
-      return;
-    }
-
-    const draft = { name, jobTitle: title, ...(location.trim() ? { location: location.trim() } : {}) };
-    const next = editingCompanyId
-      ? companies.map((company) => company.id === editingCompanyId ? { ...company, ...draft } : company)
-      : [...companies, createCompany(draft)];
-    persistCompanies(next);
+  const saveCompany = () => {
+    const { name, jobTitle, location } = companyDraft;
+    if (!name.trim() || !jobTitle.trim()) { toast.error("Company name and job title are required."); return; }
+    const draft = { name: name.trim(), jobTitle: jobTitle.trim(), ...(location.trim() ? { location: location.trim() } : {}) };
+    persistCompanies(
+      editingCompanyId
+        ? companies.map((c) => c.id === editingCompanyId ? { ...c, ...draft } : c)
+        : [...companies, createCompany(draft)]
+    );
     setCompanyDialogOpen(false);
     toast.success(editingCompanyId ? "Company updated." : "Company added.");
   };
 
   const confirmDeleteCompany = () => {
     if (!deleteCompanyId) return;
-    if (entries.some((entry) => entry.companyId === deleteCompanyId)) {
-      toast.error("Delete or reassign this company's work tasks first.");
-      setDeleteCompanyId(null);
-      return;
-    }
-    persistCompanies(companies.filter((company) => company.id !== deleteCompanyId));
-    setDeleteCompanyId(null);
-    toast.success("Company deleted.");
-  };
-
-  const openEntryForm = (entry?: WorkEntry) => {
-    if (entry) {
-      setEditingEntryId(entry.id);
-      setEntryDraft({
-        companyId: entry.companyId,
-        startMonth: entry.startMonth,
-        endMonth: entry.endMonth ?? "",
-        isPresent: entry.endMonth === null,
-        task: entry.task,
-      });
+    if (entries.some((e) => e.companyId === deleteCompanyId)) {
+      toast.error("Remove or reassign this company's work tasks first.");
     } else {
-      setEditingEntryId(null);
-      setEntryDraft(emptyEntryDraft(companies[0]?.id ?? ""));
+      persistCompanies(companies.filter((c) => c.id !== deleteCompanyId));
+      toast.success("Company deleted.");
     }
-    setEntryDialogOpen(true);
+    setDeleteCompanyId(null);
   };
 
-  const saveEntryForm = () => {
-    const { companyId, startMonth, endMonth, isPresent, task } = entryDraft;
-    if (!companyId || !companies.some((company) => company.id === companyId)) {
-      toast.error("Choose a company first.");
-      return;
-    }
-    if (!isValidMonth(startMonth)) {
-      toast.error("Enter a valid start month.");
-      return;
-    }
-    if (!isPresent && (!isValidMonth(endMonth) || endMonth < startMonth)) {
-      toast.error("End month must be valid and cannot be before the start month.");
-      return;
-    }
-    const cleanTask = task.trim();
-    if (!cleanTask) {
-      toast.error("Describe the work you did.");
-      return;
-    }
-    if (cleanTask.length > MAX_TASK_LENGTH) {
-      toast.error(`Keep the task under ${MAX_TASK_LENGTH.toLocaleString()} characters.`);
-      return;
-    }
+  // ── Entry CRUD ─────────────────────────────────────────────────────────────
+  const openEntryForm = (entry?: WorkEntry) => {
+    setEditingEntryId(entry?.id ?? null);
+    setEntryDraft(entry
+      ? { companyId: entry.companyId, startMonth: entry.startMonth, endMonth: entry.endMonth ?? "", isPresent: entry.endMonth === null, task: entry.task }
+      : emptyEntryDraft(companies[0]?.id ?? "")
+    );
+    setEntryFormOpen(true);
+  };
 
+  const saveEntry = () => {
+    const { companyId, startMonth, endMonth, isPresent, task } = entryDraft;
+    if (!companies.some((c) => c.id === companyId)) { toast.error("Choose a company first."); return; }
+    if (!isValidMonth(startMonth)) { toast.error("Enter a valid start month."); return; }
+    if (!isPresent && (!isValidMonth(endMonth) || endMonth < startMonth)) { toast.error("End month must be after start month."); return; }
+    const cleanTask = task.trim();
+    if (!cleanTask) { toast.error("Describe the work you did."); return; }
+    if (cleanTask.length > MAX_TASK_LENGTH) { toast.error(`Keep the task under ${MAX_TASK_LENGTH.toLocaleString()} characters.`); return; }
     const draft = { companyId, startMonth, endMonth: isPresent ? null : endMonth, task: cleanTask };
-    const next = editingEntryId
-      ? entries.map((entry) => entry.id === editingEntryId ? { ...entry, ...draft } : entry)
-      : [...entries, createEntry(draft)];
-    persistEntries(next);
-    setEntryDialogOpen(false);
+    persistEntries(
+      editingEntryId
+        ? entries.map((e) => e.id === editingEntryId ? { ...e, ...draft } : e)
+        : [...entries, createEntry(draft)]
+    );
+    setEntryFormOpen(false);
     toast.success(editingEntryId ? "Work task updated." : "Work task saved.");
   };
 
-  const deleteEntry = (entry: WorkEntry) => {
-    persistEntries(entries.filter((item) => item.id !== entry.id));
-    toast.success("Work task deleted.");
-  };
-
+  // ── Tailoring ──────────────────────────────────────────────────────────────
   const generateTailoredResume = async () => {
-    if (!jobDescription.trim()) {
-      toast.error("Add a job description first.");
-      return;
-    }
-    if (!entries.length) {
-      toast.error("Add at least one work task first.");
-      return;
-    }
-
-    const payloadEntries = entries.map((entry) => {
-      const group = groups.find((item) => item.id === entry.companyId);
-      return {
-        id: entry.id,
-        companyId: entry.companyId,
-        companyName: group?.name ?? "",
-        jobTitle: group?.jobTitle ?? "",
-        location: group?.location ?? "",
-        dateRange: group?.dateRange ?? "",
-        startMonth: entry.startMonth,
-        endMonth: entry.endMonth,
-        task: entry.task,
-      };
+    if (!jobDescription.trim()) { toast.error("Add a job description first."); return; }
+    if (!entries.length) { toast.error("Add at least one work task first."); return; }
+    const payloadEntries = entries.map((e) => {
+      const g = groups.find((item) => item.id === e.companyId);
+      return { ...e, companyName: g?.name ?? "", jobTitle: g?.jobTitle ?? "", location: g?.location ?? "", dateRange: g?.dateRange ?? "" };
     });
-
     setIsTailoring(true);
     setTailoredResume("");
     try {
-      const response = await fetch(API_ENDPOINTS.tailorResume, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
+      const res = await fetch(API_ENDPOINTS.tailorResume, {
+        method: "POST", headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ jobDescription, entries: payloadEntries }),
       });
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => null);
-        throw new Error(errorData?.error || "Failed to tailor resume.");
-      }
-      const data = await response.json().catch(() => {
-        throw new Error("The server returned an invalid response.");
-      });
-      setTailoredResume(typeof data.resume === "string" ? data.resume.trim() : "");
-      if (!data.resume?.trim()) toast.message("No work tasks matched this job description.");
+      if (!res.ok) throw new Error((await res.json().catch(() => null))?.error ?? "Failed to tailor resume.");
+      const data = await res.json().catch(() => { throw new Error("Invalid server response."); });
+      const text = typeof data.resume === "string" ? data.resume.trim() : "";
+      setTailoredResume(text);
+      if (!text) toast.message("No work tasks matched this job description.");
       else toast.success("Tailored resume generated.");
-    } catch (error) {
-      console.error("Error tailoring resume:", error);
-      toast.error(error instanceof Error ? error.message : "Failed to tailor resume.");
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Failed to tailor resume.");
     } finally {
       setIsTailoring(false);
     }
   };
 
   const downloadTailoredResume = async () => {
-    if (!tailoredResume) {
-      toast.error("Generate a tailored resume first.");
-      return;
-    }
+    if (!tailoredResume) { toast.error("Generate a tailored resume first."); return; }
     try {
       if (downloadFormat === "pdf") downloadPDF(tailoredResume);
-      if (downloadFormat === "docx") await downloadDocx(tailoredResume);
-      if (downloadFormat === "txt") downloadTxt(tailoredResume);
-      toast.success("Resume downloaded.");
-    } catch (error) {
-      console.error("Error downloading tailored resume:", error);
-      toast.error("Failed to download resume.");
-    }
+      else if (downloadFormat === "docx") await downloadDocx(tailoredResume);
+      else downloadTxt(tailoredResume);
+    } catch { toast.error("Failed to download resume."); }
   };
 
+  // ── Slots passed into the collage ─────────────────────────────────────────
   const companyManager: ReactNode = (
     <>
-      <Button type="button" variant="outline" className="rounded-pill" onClick={() => setCompaniesDialogOpen(true)} data-testid="add-company">
+      <Button type="button" variant="outline" className="rounded-pill" onClick={() => openCompanyDialog()} data-testid="add-company">
         <Plus className="mr-2 h-4 w-4" /> Manage companies
       </Button>
+
+      {/* Single company add/edit dialog */}
       <Dialog open={companyDialogOpen} onOpenChange={setCompanyDialogOpen}>
         <DialogContent>
           <DialogHeader>
             <DialogTitle>{editingCompanyId ? "Edit company" : "Add company"}</DialogTitle>
-            <DialogDescription>Save the job title once; your work tasks will reference it.</DialogDescription>
+            <DialogDescription>Save the job title once; work tasks will reference it.</DialogDescription>
           </DialogHeader>
           <div className="space-y-4 py-2">
-            <div className="space-y-2"><Label htmlFor="company-name">Company name</Label><Input id="company-name" value={companyName} onChange={(event) => setCompanyName(event.target.value)} /></div>
-            <div className="space-y-2"><Label htmlFor="job-title">Job title</Label><Input id="job-title" value={jobTitle} onChange={(event) => setJobTitle(event.target.value)} /></div>
-            <div className="space-y-2"><Label htmlFor="company-location">Location <span className="text-muted-foreground">(optional)</span></Label><Input id="company-location" value={location} onChange={(event) => setLocation(event.target.value)} /></div>
-          </div>
-          <DialogFooter><Button type="button" variant="outline" onClick={() => setCompanyDialogOpen(false)}>Cancel</Button><Button type="button" onClick={saveCompanyForm}>Save company</Button></DialogFooter>
-        </DialogContent>
-      </Dialog>
-      <Dialog open={companiesDialogOpen} onOpenChange={setCompaniesDialogOpen}>
-        <DialogContent className="max-w-2xl">
-          <DialogHeader><DialogTitle>Companies</DialogTitle><DialogDescription>Manage the companies used by your work task cards.</DialogDescription></DialogHeader>
-          <div className="space-y-3">
-            {companies.length === 0 ? <p className="rounded-lg border border-dashed p-6 text-center text-sm text-muted-foreground">No companies yet.</p> : companies.map((company) => (
-              <div key={company.id} className="flex flex-col gap-3 rounded-lg border border-border p-4 sm:flex-row sm:items-center sm:justify-between">
-                <div><p className="font-semibold">{company.name}</p><p className="text-sm text-muted-foreground">{company.jobTitle}{company.location ? ` · ${company.location}` : ""}</p></div>
-                <div className="flex gap-2"><Button type="button" variant="outline" size="sm" onClick={() => { setCompaniesDialogOpen(false); openCompanyDialog(company); }}>Edit</Button><Button type="button" variant="ghost" size="sm" className="text-destructive hover:text-destructive" onClick={() => setDeleteCompanyId(company.id)}><Trash2 className="mr-2 h-4 w-4" />Delete</Button></div>
+            {(["name", "jobTitle"] as const).map((field) => (
+              <div key={field} className="space-y-2">
+                <Label htmlFor={`company-${field}`}>{field === "name" ? "Company name" : "Job title"}</Label>
+                <Input id={`company-${field}`} value={companyDraft[field]} onChange={(e) => setCompanyDraft((d) => ({ ...d, [field]: e.target.value }))} />
               </div>
             ))}
+            <div className="space-y-2">
+              <Label htmlFor="company-location">Location <span className="text-muted-foreground">(optional)</span></Label>
+              <Input id="company-location" value={companyDraft.location} onChange={(e) => setCompanyDraft((d) => ({ ...d, location: e.target.value }))} />
+            </div>
+            {/* Company list inline */}
+            {companies.length > 0 && (
+              <div className="space-y-2 pt-2">
+                <p className="text-sm font-medium">Your companies</p>
+                {companies.map((c) => (
+                  <div key={c.id} className="flex items-center justify-between rounded-lg border border-border p-3">
+                    <div><p className="text-sm font-medium">{c.name}</p><p className="text-xs text-muted-foreground">{c.jobTitle}</p></div>
+                    <div className="flex gap-1">
+                      <Button type="button" variant="ghost" size="sm" onClick={() => openCompanyDialog(c)}>Edit</Button>
+                      <Button type="button" variant="ghost" size="sm" className="text-destructive" onClick={() => setDeleteCompanyId(c.id)}><Trash2 className="h-4 w-4" /></Button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
-          <DialogFooter><Button type="button" onClick={() => { setCompaniesDialogOpen(false); openCompanyDialog(); }}>Add company</Button></DialogFooter>
+          <DialogFooter>
+            <Button type="button" variant="outline" onClick={() => setCompanyDialogOpen(false)}>Cancel</Button>
+            <Button type="button" onClick={saveCompany}>Save company</Button>
+          </DialogFooter>
         </DialogContent>
       </Dialog>
+
       <AlertDialog open={Boolean(deleteCompanyId)} onOpenChange={(open) => !open && setDeleteCompanyId(null)}>
-        <AlertDialogContent><AlertDialogHeader><AlertDialogTitle>Delete this company?</AlertDialogTitle><AlertDialogDescription>A company with work tasks cannot be deleted until those tasks are removed or reassigned.</AlertDialogDescription></AlertDialogHeader><AlertDialogFooter><AlertDialogCancel>Cancel</AlertDialogCancel><AlertDialogAction onClick={confirmDeleteCompany}>Delete company</AlertDialogAction></AlertDialogFooter></AlertDialogContent>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete this company?</AlertDialogTitle>
+            <AlertDialogDescription>A company with work tasks cannot be deleted until those tasks are removed or reassigned.</AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={confirmDeleteCompany}>Delete</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
       </AlertDialog>
     </>
   );
 
-  const entryForm: ReactNode = entryDialogOpen ? (
+  const entryForm: ReactNode = entryFormOpen ? (
     <Card className="mb-8 border-primary/30 bg-background p-5" data-testid="work-task-form">
-      <div className="mb-5 flex items-center justify-between"><div><h3 className="text-lg font-semibold">{editingEntryId ? "Edit work task" : "Add work task"}</h3><p className="text-sm text-muted-foreground">Capture one concrete accomplishment with its month range.</p></div><Button type="button" variant="ghost" onClick={() => setEntryDialogOpen(false)}>Cancel</Button></div>
-      <div className="grid gap-4 md:grid-cols-2">
-        <div className="space-y-2"><Label htmlFor="work-company">Company</Label><Select value={entryDraft.companyId} onValueChange={(value) => setEntryDraft((draft) => ({ ...draft, companyId: value }))}><SelectTrigger id="work-company"><SelectValue placeholder="Choose a company" /></SelectTrigger><SelectContent>{companies.map((company) => <SelectItem key={company.id} value={company.id}>{company.name} · {company.jobTitle}</SelectItem>)}</SelectContent></Select></div>
-        <div className="space-y-2"><Label htmlFor="work-start-month">Start month</Label><Input id="work-start-month" type="month" value={entryDraft.startMonth} onChange={(event) => setEntryDraft((draft) => ({ ...draft, startMonth: event.target.value }))} /></div>
-        <div className="space-y-2"><Label htmlFor="work-end-month">End month</Label><Input id="work-end-month" type="month" disabled={entryDraft.isPresent} value={entryDraft.endMonth} onChange={(event) => setEntryDraft((draft) => ({ ...draft, endMonth: event.target.value }))} /></div>
-        <label className="mt-7 flex min-h-10 items-center gap-3 text-sm"><input type="checkbox" checked={entryDraft.isPresent} onChange={(event) => setEntryDraft((draft) => ({ ...draft, isPresent: event.target.checked }))} /> This task is ongoing (Present)</label>
+      <div className="mb-5 flex items-center justify-between">
+        <div>
+          <h3 className="text-lg font-semibold">{editingEntryId ? "Edit work task" : "Add work task"}</h3>
+          <p className="text-sm text-muted-foreground">Capture one concrete accomplishment with its month range.</p>
+        </div>
+        <Button type="button" variant="ghost" onClick={() => setEntryFormOpen(false)}>Cancel</Button>
       </div>
-      <div className="mt-4 space-y-2"><Label htmlFor="work-task">What did you accomplish?</Label><Textarea id="work-task" maxLength={MAX_TASK_LENGTH} value={entryDraft.task} onChange={(event) => setEntryDraft((draft) => ({ ...draft, task: event.target.value }))} placeholder="I created an automation that reduced FTE workload by..." className="min-h-28" /><p className="text-right text-xs text-muted-foreground">{entryDraft.task.length}/{MAX_TASK_LENGTH}</p></div>
-      <div className="mt-5 flex justify-end"><Button type="button" onClick={saveEntryForm}>{editingEntryId ? "Update task" : "Save task"}</Button></div>
+      <div className="grid gap-4 md:grid-cols-2">
+        <div className="space-y-2">
+          <Label htmlFor="work-company">Company</Label>
+          <Select value={entryDraft.companyId} onValueChange={(v) => setEntryDraft((d) => ({ ...d, companyId: v }))}>
+            <SelectTrigger id="work-company"><SelectValue placeholder="Choose a company" /></SelectTrigger>
+            <SelectContent>{companies.map((c) => <SelectItem key={c.id} value={c.id}>{c.name} · {c.jobTitle}</SelectItem>)}</SelectContent>
+          </Select>
+        </div>
+        <div className="space-y-2">
+          <Label htmlFor="work-start">Start month</Label>
+          <Input id="work-start" type="month" value={entryDraft.startMonth} onChange={(e) => setEntryDraft((d) => ({ ...d, startMonth: e.target.value }))} />
+        </div>
+        <div className="space-y-2">
+          <Label htmlFor="work-end">End month</Label>
+          <Input id="work-end" type="month" disabled={entryDraft.isPresent} value={entryDraft.endMonth} onChange={(e) => setEntryDraft((d) => ({ ...d, endMonth: e.target.value }))} />
+        </div>
+        <label className="mt-7 flex min-h-10 items-center gap-3 text-sm cursor-pointer">
+          <input type="checkbox" checked={entryDraft.isPresent} onChange={(e) => setEntryDraft((d) => ({ ...d, isPresent: e.target.checked }))} />
+          Ongoing (Present)
+        </label>
+      </div>
+      <div className="mt-4 space-y-2">
+        <Label htmlFor="work-task">What did you accomplish?</Label>
+        <Textarea
+          id="work-task"
+          maxLength={MAX_TASK_LENGTH}
+          value={entryDraft.task}
+          onChange={(e) => setEntryDraft((d) => ({ ...d, task: e.target.value }))}
+          placeholder="I created an automation that reduced FTE workload by..."
+          className="min-h-28"
+        />
+        <p className="text-right text-xs text-muted-foreground">{entryDraft.task.length}/{MAX_TASK_LENGTH}</p>
+      </div>
+      <div className="mt-5 flex justify-end">
+        <Button type="button" onClick={saveEntry}>{editingEntryId ? "Update task" : "Save task"}</Button>
+      </div>
     </Card>
   ) : null;
 
   return (
     <>
-      <WorkTaskCollage groups={groups} totalEntries={totalEntries} companyManager={companyManager} entryForm={entryForm} onAddEntry={() => { if (!companies.length) { toast.error("Add a company first."); return; } openEntryForm(); }} onEditEntry={openEntryForm} onDeleteEntry={deleteEntry} />
-      <section id="tailor-resume" className="px-4 py-20 sm:px-6 sm:py-28" aria-labelledby="tailor-resume-title">
-        <div className="mx-auto max-w-wide">
-          <div className="max-w-3xl"><p className="mb-4 text-sm font-semibold uppercase tracking-[0.18em] text-primary">Tailor for the role</p><h2 id="tailor-resume-title" className="text-section">Turn your work library into the right resume.</h2><p className="mt-5 text-lg text-muted-foreground">Paste a job description and the AI will keep only the work proof that belongs in that conversation.</p></div>
+      <WorkTaskCollage
+        groups={groups}
+        totalEntries={entries.length}
+        companyManager={companyManager}
+        entryForm={entryForm}
+        onAddEntry={() => { if (!companies.length) { toast.error("Add a company first."); return; } openEntryForm(); }}
+        onEditEntry={openEntryForm}
+        onDeleteEntry={(entry) => { persistEntries(entries.filter((e) => e.id !== entry.id)); toast.success("Work task deleted."); }}
+      />
+
+      {/* The tailoring flow is available exclusively in the /create wizard. */}
+      <div className="hidden" aria-hidden="true">
           <div className="mt-12 grid gap-6 lg:grid-cols-2">
-            <Card className="rounded-panel border-border/70 bg-card p-5 shadow-md"><Label htmlFor="tailor-job-description" className="text-2xl font-semibold tracking-tight">Job description</Label><Textarea id="tailor-job-description" value={jobDescription} onChange={(event) => setJobDescription(event.target.value)} placeholder="Paste the target job description here..." className="mt-4 min-h-80 resize-none rounded-2xl bg-background" aria-describedby="tailor-help" /><p id="tailor-help" className="mt-3 text-sm text-muted-foreground">{totalEntries ? `${totalEntries} work task${totalEntries === 1 ? "" : "s"} available for matching.` : "Add work tasks above before generating."}</p><Button type="button" onClick={generateTailoredResume} disabled={isTailoring || !jobDescription.trim() || !totalEntries} className="mt-5 h-12 w-full rounded-pill text-base" data-testid="generate-tailored-resume">{isTailoring ? <><Loader2 className="mr-2 h-5 w-5 animate-spin" /> Matching your work...</> : <><Sparkles className="mr-2 h-5 w-5" /> Generate Tailored Resume</>}</Button></Card>
-            <Card className="rounded-panel border-border/70 bg-card p-5 shadow-md"><div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between"><h3 className="text-2xl font-semibold tracking-tight">Tailored preview</h3>{tailoredResume && <div className="flex gap-2"><Select value={downloadFormat} onValueChange={(value: DownloadFormat) => setDownloadFormat(value)}><SelectTrigger className="w-32 bg-background"><SelectValue /></SelectTrigger><SelectContent><SelectItem value="pdf">PDF</SelectItem><SelectItem value="docx">Word</SelectItem><SelectItem value="txt">Text</SelectItem></SelectContent></Select><Button type="button" variant="outline" onClick={downloadTailoredResume} aria-label="Download tailored resume"><FileDown className="mr-2 h-4 w-4" />Download</Button></div>}</div><div className="mt-4 min-h-80 rounded-lg border border-border bg-muted/30 p-5">{tailoredResume ? <Textarea value={tailoredResume} onChange={(event) => setTailoredResume(event.target.value)} className="min-h-72 resize-none border-0 bg-transparent p-0 font-mono text-sm focus:ring-0" aria-label="Tailored resume preview" /> : <div className="flex min-h-72 items-center justify-center text-center text-muted-foreground">{isTailoring ? "Selecting the strongest evidence..." : totalEntries === 0 ? "Your saved work tasks will appear here after you add them." : "Your tailored work experience will appear here."}</div>}</div></Card>
+            <Card className="rounded-panel border-border/70 bg-card p-5 shadow-md">
+              <Label htmlFor="tailor-jd" className="text-2xl font-semibold tracking-tight">Job description</Label>
+              <Textarea
+                id="tailor-jd"
+                value={jobDescription}
+                onChange={(e) => setJobDescription(e.target.value)}
+                placeholder="Paste the target job description here..."
+                className="mt-4 min-h-80 resize-none rounded-2xl bg-background"
+              />
+              <p className="mt-3 text-sm text-muted-foreground">
+                {entries.length ? `${entries.length} work task${entries.length === 1 ? "" : "s"} available.` : "Add work tasks above before generating."}
+              </p>
+              <Button
+                type="button"
+                onClick={generateTailoredResume}
+                disabled={isTailoring || !jobDescription.trim() || !entries.length}
+                className="mt-5 h-12 w-full rounded-pill text-base"
+                data-testid="generate-tailored-resume"
+              >
+                {isTailoring
+                  ? <><Loader2 className="mr-2 h-5 w-5 animate-spin" /> Matching your work...</>
+                  : <><Sparkles className="mr-2 h-5 w-5" /> Generate Tailored Resume</>}
+              </Button>
+            </Card>
+
+            <Card className="rounded-panel border-border/70 bg-card p-5 shadow-md">
+              <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+                <h3 className="text-2xl font-semibold tracking-tight">Tailored preview</h3>
+                {tailoredResume && (
+                  <div className="flex gap-2">
+                    <Select value={downloadFormat} onValueChange={(v: DownloadFormat) => setDownloadFormat(v)}>
+                      <SelectTrigger className="w-32 bg-background"><SelectValue /></SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="pdf">PDF</SelectItem>
+                        <SelectItem value="docx">Word</SelectItem>
+                        <SelectItem value="txt">Text</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    <Button type="button" variant="outline" onClick={downloadTailoredResume} aria-label="Download tailored resume">
+                      <FileDown className="mr-2 h-4 w-4" /> Download
+                    </Button>
+                  </div>
+                )}
+              </div>
+              <div className="mt-4 min-h-80 rounded-lg border border-border bg-muted/30 p-5">
+                {tailoredResume
+                  ? <Textarea value={tailoredResume} onChange={(e) => setTailoredResume(e.target.value)} className="min-h-72 resize-none border-0 bg-transparent p-0 font-mono text-sm focus:ring-0" aria-label="Tailored resume preview" />
+                  : <div className="flex min-h-72 items-center justify-center text-center text-muted-foreground">
+                      {isTailoring ? "Selecting the strongest evidence…" : entries.length === 0 ? "Add work tasks above to start." : "Your tailored work experience will appear here."}
+                    </div>}
+              </div>
+            </Card>
           </div>
         </div>
-      </section>
     </>
   );
 }

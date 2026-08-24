@@ -1,0 +1,1 @@
+export function AiLoader({ message = "Working with AI…" }: { message?: string }) { return <div className="flex items-center gap-3 rounded-xl border border-primary/20 bg-primary/5 p-4 text-sm text-muted-foreground" role="status" aria-live="polite"><span className="h-3 w-3 animate-pulse rounded-full bg-primary" /><span>{message}</span></div>; }

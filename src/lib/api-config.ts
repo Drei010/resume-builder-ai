@@ -19,4 +19,5 @@ export const API_BASE_URL = getApiUrl();
 export const API_ENDPOINTS = {
   generateResume: API_BASE_URL,
   tailorResume: "/api/tailor-resume",
+  parseResume: "/api/parse-resume",
 };

@@ -11,6 +11,11 @@
     "closerTitle": "Pensado desde el primer borrador hasta la descarga final.",
     "closerItems": ["Empieza con lo que sabes", "Da forma a la historia", "Hazlo tuyo"],
     "closerDescription": "Convierte tu experiencia desordenada en un texto claro, honesto y compatible con ATS que sigue sonando a ti.",
+    "closerDescriptions": [
+      "Pega las tareas, logros y responsabilidades de tu historial laboral, sin necesidad de pulirlos.",
+      "La IA selecciona los logros más relevantes para la descripción del trabajo y los reescribe como bullets concisos orientados a la acción.",
+      "Edita la vista previa en línea, descárgala en el formato que necesitas y envíala con confianza."
+    ],
     "toolEyebrow": "El creador",
     "toolTitle": "Crea algo que se sienta como tú."
   },

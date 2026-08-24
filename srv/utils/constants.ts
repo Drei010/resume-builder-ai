@@ -47,6 +47,8 @@ IMPORTANT RULES:
 
 ${OUTPUT_FORMAT}`;
 
+const PARSE_RESUME_SYSTEM_PROMPT = `You extract resume facts into JSON. Never invent or infer facts. Return only valid JSON with this schema: {"profile":{"fullName":"","email":"","phone":"","linkedin":"","github":"","location":"","education":"","skills":"","certifications":""},"companies":[{"name":"","jobTitle":"","location":""}],"entries":[{"companyName":"","startMonth":"YYYY-MM","endMonth":"YYYY-MM or null","task":""}]}. Preserve wording and dates when possible; use empty strings for missing values.`;
+
 const TAILOR_SYSTEM_PROMPT = `You are an expert ATS resume writer tailoring work experience to a target job description.
 
 Use only facts in the supplied work database entries. Select only entries that are materially relevant to the target job description. Discard unrelated entries instead of forcing them into the resume. Rewrite selected tasks as concise, achievement-focused lines without changing their factual meaning.
@@ -63,4 +65,4 @@ ${OUTPUT_FORMAT}
 
 For this tailoring flow, output ONLY the WORK EXPERIENCE section. Do not output the contact header, PROJECTS, SKILLS & ABILITIES, CERTIFICATIONS, or EDUCATION sections. If no entries are relevant, return an empty response rather than N/A or commentary.`;
 
-export { OUTPUT_FORMAT, SYSTEM_PROMPT, TAILOR_SYSTEM_PROMPT };
+export { OUTPUT_FORMAT, SYSTEM_PROMPT, TAILOR_SYSTEM_PROMPT, PARSE_RESUME_SYSTEM_PROMPT };

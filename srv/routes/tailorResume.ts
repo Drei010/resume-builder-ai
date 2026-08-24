@@ -6,7 +6,8 @@ import generateResumeOpenAI from "./openAI.js";
 const MAX_JOB_DESCRIPTION_LENGTH = 12_000;
 const MAX_ENTRIES = 200;
 const MAX_TASK_LENGTH = 2_000;
-const MAX_CONTEXT_LENGTH = 18_000;
+const MAX_CONTEXT_LENGTH = 60_000;
+const MAX_TOTAL_ENTRY_CHARS = 30_000;
 
 type TailorEntry = {
   id: string;
@@ -79,7 +80,14 @@ export async function tailorResume(req: Request, res: Response) {
   const entries = validateEntries(body.entries);
   if (typeof entries === "string") return res.status(400).json({ error: entries });
 
-  const context = `Target job description:\n${jobDescription.trim()}\n\nWork database entries (use only these facts):\n${JSON.stringify(entries)}`;
+  const compactEntries = entries.reduce<TailorEntry[]>((result, entry) => {
+    if (result.reduce((size, item) => size + item.task.length, 0) + entry.task.length <= MAX_TOTAL_ENTRY_CHARS) {
+      result.push({ ...entry, task: entry.task.slice(0, MAX_TASK_LENGTH) });
+    }
+    return result;
+  }, []);
+  if (!compactEntries.length) return res.status(413).json({ error: "The work entries are too large or incomplete. Shorten the task descriptions and try again." });
+  const context = `Target job description:\n${jobDescription.trim().slice(0, 8000)}\n\nWork database entries (use only these facts):\n${JSON.stringify(compactEntries)}`;
   if (context.length > MAX_CONTEXT_LENGTH) {
     return res.status(413).json({ error: "The job description and work entries are too large. Shorten them and try again." });
   }

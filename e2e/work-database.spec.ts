@@ -23,7 +23,6 @@ test.describe("work database tailoring", () => {
     await page.locator("#work-database").screenshot({ path: "e2e/screenshots/views/work-collage-light-grid.png" });
 
     await page.getByTestId("add-company").click();
-    await page.getByRole("button", { name: "Add company" }).last().click();
     await page.getByLabel("Company name").fill(company.name);
     await page.getByLabel("Job title").fill(company.jobTitle);
     await page.getByRole("button", { name: "Save company" }).click();

@@ -11,6 +11,11 @@
     "closerTitle": "Maingat mula sa unang draft hanggang sa huling download.",
     "closerItems": ["Magsimula sa iyong alam", "Ayusin ang kuwento", "Gawin itong iyo"],
     "closerDescription": "Gawing malinaw, tapat, at ATS-friendly na pagsulat ang iyong hindi organisadong karanasan habang nananatiling ikaw ang tunog nito.",
+    "closerDescriptions": [
+      "I-paste ang mga gawain, tagumpay, at responsibilidad mula sa iyong kasaysayan sa trabaho — hindi kailangan ng pagsasaayos.",
+      "Pinipili ng AI ang pinaka-angkop na patunay para sa job description at isinusulat bilang maigsi, aksiyon-oriented na mga bullet.",
+      "I-edit ang preview nang direkta, i-download sa format na kailangan mo, at ipadala nang may kumpiyansa."
+    ],
     "toolEyebrow": "Ang builder",
     "toolTitle": "Bumuo ng resume na tunay na ikaw."
   },
