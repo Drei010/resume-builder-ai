@@ -1,12 +1,14 @@
 import { useEffect, useMemo, useState, type ReactNode } from "react";
+import gsap from "gsap";
+import { ScrollTrigger } from "gsap/ScrollTrigger";
+import { useGsap } from "@/hooks/use-gsap";
 import { CalendarDays, Pencil, Plus, Trash2 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import type { CompanyGroup, WorkEntry } from "@/lib/work-db";
 
-const EMPTY_CARD_COUNT = 3;
-const MAX_STACKED_CARDS = 6;
+const MAX_PREVIEW_CARDS = 12;
 
 type WorkTaskCollageProps = {
   groups: CompanyGroup[];
@@ -18,12 +20,14 @@ type WorkTaskCollageProps = {
   onDeleteEntry: (entry: WorkEntry) => void;
 };
 
-function stackedTransform(index: number): string {
-  const rotation = ((index * 17) % 9) - 4;
-  const x = ((index * 23) % 25) - 12;
-  const y = index * 5;
-  return `translate(${x}px, ${y}px) rotate(${rotation}deg)`;
-}
+const EXAMPLE_TASKS = [
+  "Reduced processing time by 35% through a workflow automation.",
+  "Built an automated reporting workflow for cross-functional teams.",
+  "Led a launch that improved customer response time.",
+  "Created a repeatable system that reduced manual work.",
+];
+
+type PreviewCard = { id: string; company: string; date: string; task: string };
 
 export function WorkTaskCollage({
   groups,
@@ -37,7 +41,16 @@ export function WorkTaskCollage({
   const [isExpanded, setIsExpanded] = useState(false);
   const [reducedMotion, setReducedMotion] = useState(false);
   const entries = useMemo(() => groups.flatMap((group) => group.entries), [groups]);
-  const visibleEntries = entries.slice(0, MAX_STACKED_CARDS);
+  const previewCards = useMemo<PreviewCard[]>(() => entries.length
+    ? entries.slice(0, MAX_PREVIEW_CARDS).map((entry) => {
+        const group = groups.find((item) => item.id === entry.companyId);
+        return { id: entry.id, company: group?.name ?? "Your company", date: entry.startMonth || "Your impact", task: entry.task };
+      })
+    : EXAMPLE_TASKS.map((task, index) => ({ id: `example-${index}`, company: "Your next win", date: "Impact statement", task })), [entries, groups]);
+  const columnCards = useMemo(() => Array.from({ length: 4 }, (_, column) => {
+    const count = Math.max(3, Math.ceil(previewCards.length / 4));
+    return Array.from({ length: count }, (_, index) => previewCards[(column + index * 4) % previewCards.length]);
+  }), [previewCards]);
 
   useEffect(() => {
     const media = window.matchMedia("(prefers-reduced-motion: reduce)");
@@ -48,10 +61,19 @@ export function WorkTaskCollage({
   }, []);
 
   const toggleExpanded = () => setIsExpanded((expanded) => !expanded);
-  const stackHeight = totalEntries === 0 ? 250 : Math.min(360, 190 + visibleEntries.length * 12);
+  const motionRef = useGsap<HTMLElement>((root, prefersReducedMotion) => {
+    if (prefersReducedMotion || isExpanded) return;
+    const stack = root.querySelector<HTMLElement>("[data-collage-stack]");
+    const columns = root.querySelectorAll<HTMLElement>("[data-collage-column]");
+    if (!stack || !columns.length) return;
+    columns.forEach((column, index) => {
+      const movingDown = index % 2 === 1;
+      gsap.fromTo(column, { yPercent: movingDown ? -14 : 14 }, { yPercent: movingDown ? 14 : -14, ease: "none", scrollTrigger: { trigger: stack, start: "top bottom", end: "bottom top", scrub: 0.35 } });
+    });
+  }, [isExpanded]);
 
   return (
-    <section id="work-database" className="bg-secondary/70 px-4 py-20 sm:px-6 sm:py-28" aria-labelledby="work-database-title">
+    <section ref={motionRef} id="work-database" className="bg-secondary/70 px-4 py-20 sm:px-6 sm:py-28" aria-labelledby="work-database-title">
       <div className="mx-auto max-w-wide">
         <div className="max-w-3xl">
           <p className="mb-4 text-sm font-semibold uppercase tracking-[0.18em] text-primary">Your work library</p>
@@ -66,55 +88,39 @@ export function WorkTaskCollage({
             <p className="sr-only" aria-live="polite">
               {totalEntries === 0 ? "No work tasks saved yet." : `${totalEntries} work tasks saved.`}
             </p>
-            <div className="relative mx-auto max-w-3xl" style={{ height: stackHeight }}>
-              <div className="absolute inset-x-0 top-4 mx-auto h-56 max-w-xl" aria-hidden="true">
-                {(visibleEntries.length ? visibleEntries : Array.from({ length: EMPTY_CARD_COUNT })).map((entry, index) => {
-                  const actualEntry = entry as WorkEntry | undefined;
-                  const group = actualEntry ? groups.find((item) => item.id === actualEntry.companyId) : undefined;
-                  return (
-                    <Card
-                      key={actualEntry?.id ?? `empty-${index}`}
-                      className={`absolute inset-x-3 mx-auto h-48 max-w-md overflow-hidden border-border/70 bg-card p-5 shadow-xl transition-transform ${reducedMotion ? "duration-0" : "duration-700 ease-out"}`}
-                      style={{ transform: stackedTransform(index), zIndex: index + 1 }}
-                    >
-                      {actualEntry ? (
-                        <>
-                          <div className="flex items-center justify-between gap-3">
-                            <Badge variant="secondary" className="max-w-[70%] truncate">{group?.name ?? "Company"}</Badge>
-                            <span className="text-xs text-muted-foreground">{actualEntry.startMonth}</span>
+            <div className="relative mx-auto w-full max-w-wide overflow-hidden rounded-[2rem] bg-transparent p-2" style={{ height: "clamp(420px, 52vw, 560px)" }}>
+              <div data-collage-stack className="absolute inset-0 flex gap-3 overflow-hidden px-2 sm:gap-4 sm:px-4" aria-hidden="true">
+                {columnCards.map((cards, column) => (
+                  <div key={`column-${column}`} data-collage-column className="min-w-0 flex-1 overflow-hidden [mask-image:linear-gradient(to_bottom,transparent,black_12%,black_88%,transparent)]">
+                    <div data-collage-track className={`flex flex-col gap-3 sm:gap-4 ${reducedMotion ? "" : column % 2 ? "work-library-track-down" : "work-library-track-up"}`} style={{ animationDuration: `${58 + column * 5}s` }}>
+                      {[...cards, ...cards].map((card, index) => (
+                        <Card key={`${card.id}-${column}-${index}`} className={`shrink-0 overflow-hidden border-0 bg-card/95 p-4 shadow-lg sm:p-5 ${reducedMotion ? "" : "transition-shadow duration-300 hover:shadow-xl"}`}>
+                          <div className="flex items-center justify-between gap-2">
+                            <Badge variant="secondary" className="max-w-[72%] truncate">{card.company}</Badge>
+                            <span className="text-[10px] text-muted-foreground sm:text-xs">{card.date}</span>
                           </div>
-                          <p className="mt-5 line-clamp-4 text-lg font-medium leading-relaxed">{actualEntry.task}</p>
-                        </>
-                      ) : (
-                        <div className="space-y-4 opacity-40">
-                          <div className="h-3 w-28 rounded-full bg-muted" />
-                          <div className="h-4 w-full rounded-full bg-muted" />
-                          <div className="h-4 w-4/5 rounded-full bg-muted" />
-                          <div className="h-4 w-2/3 rounded-full bg-muted" />
-                        </div>
-                      )}
-                    </Card>
-                  );
-                })}
-                {totalEntries > MAX_STACKED_CARDS && (
-                  <span className="absolute -right-2 -top-2 z-20 rounded-pill bg-primary px-3 py-1 text-xs font-semibold text-primary-foreground">
-                    +{totalEntries - MAX_STACKED_CARDS} more
-                  </span>
-                )}
+                          <p className="mt-4 line-clamp-5 text-sm font-medium leading-relaxed sm:text-base">{card.task}</p>
+                        </Card>
+                      ))}
+                    </div>
+                  </div>
+                ))}
               </div>
-              <div className="absolute inset-0 z-30 flex items-center justify-center">
-                <Button
-                  type="button"
-                  size="lg"
-                  className="rounded-pill px-6 shadow-lg"
-                  aria-expanded={false}
-                  aria-controls="work-task-grid"
-                  onClick={toggleExpanded}
-                  data-testid="modify-work-tasks"
-                >
-                  <Pencil className="mr-2 h-4 w-4" />
-                  Modify Work Tasks List
-                </Button>
+              <div className="absolute inset-0 z-30 flex items-center justify-center p-6">
+                <div className="rounded-[2rem] bg-background/65 p-3 shadow-2xl backdrop-blur-xl">
+                  <Button
+                    type="button"
+                    size="lg"
+                    className="h-16 rounded-pill px-9 text-base shadow-lg sm:h-20 sm:px-12 sm:text-lg"
+                    aria-expanded={false}
+                    aria-controls="work-task-grid"
+                    onClick={toggleExpanded}
+                    data-testid="modify-work-tasks"
+                  >
+                    <Pencil className="mr-2 h-5 w-5" />
+                    Modify Work Tasks List
+                  </Button>
+                </div>
               </div>
             </div>
           </div>

@@ -24,7 +24,7 @@ test.describe("resume builder wizard", () => {
     await page.screenshot({ path: "test-results/wizard-03-work-library.png", fullPage: true });
     await page.getByRole("button", { name: /continue/i }).click();
     await page.screenshot({ path: "test-results/wizard-04-job-description.png", fullPage: true });
-    await page.getByPlaceholder(/paste the job description/i).fill("Senior engineer with data pipeline experience");
+    await page.getByRole("textbox", { name: "Job description" }).fill("Senior engineer with data pipeline experience");
     await page.getByRole("button", { name: /generate my resume/i }).click();
     await expect(page.getByText(/generating your resume/i)).toBeVisible();
     await page.screenshot({ path: "test-results/wizard-05-generating.png", fullPage: true });
@@ -39,16 +39,37 @@ test.describe("resume builder wizard", () => {
     await page.screenshot({ path: "test-results/wizard-07-latex.png", fullPage: true });
   });
 
+  test("reduced motion keeps landing and wizard content available", async ({ page }) => {
+    await page.emulateMedia({ reducedMotion: "reduce" });
+    await page.goto("/");
+    await expect(page.getByRole("heading", { name: /transform your experience/i })).toBeVisible();
+    await page.getByRole("button", { name: /create now/i }).click();
+    await expect(page.getByRole("heading", { name: /how would you like to begin/i })).toBeVisible();
+    await page.screenshot({ path: "test-results/wizard-reduced-motion.png", fullPage: true });
+  });
+
+  test("saved resume can be selected from the start step", async ({ page }) => {
+    const savedText = "Ada Lovelace\\nada@example.com\\n\\nWORK EXPERIENCE\\nBuilt an analytical engine.";
+    await page.goto("/");
+    await page.evaluate((text) => localStorage.setItem("savedResumes", JSON.stringify([{ id: "saved-test", title: "Analytics resume", text, createdAt: "2025-01-01T00:00:00.000Z" }])), savedText);
+    await page.reload();
+    await page.getByRole("button", { name: /create now/i }).click();
+    await expect(page.getByTestId("saved-resume-option")).toBeVisible();
+    await page.getByRole("button", { name: /open saved resume/i }).click();
+    await expect(page.getByRole("heading", { name: /your tailored resume/i })).toBeVisible();
+    await expect(page.getByRole("textbox", { name: /resume preview/i })).toHaveValue(savedText);
+  });
+
   test("upload path parses and prefills profile and work history", async ({ page }) => {
     await page.goto("/");
     await page.getByRole("button", { name: /create now/i }).click();
-    await page.getByPlaceholder(/or paste resume text/i).fill("Ada Lovelace ada@example.com");
+    await page.getByRole("textbox", { name: "Resume text" }).fill("Ada Lovelace ada@example.com");
     await page.getByRole("button", { name: /use this resume/i }).click();
     await expect(page.getByRole("heading", { name: /how would you like to begin/i })).toBeVisible();
     await expect(page.getByRole("textbox", { name: "Full name" })).toBeVisible();
     await page.screenshot({ path: "test-results/wizard-upload-profile.png", fullPage: true });
     await page.getByRole("button", { name: /continue/i }).click();
-    await expect(page.getByPlaceholder("Company")).toBeVisible();
+    await expect(page.getByRole("textbox", { name: "Company" })).toBeVisible();
     await expect(page.locator('textarea').filter({ hasValue: /Built a reliable/ })).toBeVisible();
     await page.screenshot({ path: "test-results/wizard-upload-work.png", fullPage: true });
   });

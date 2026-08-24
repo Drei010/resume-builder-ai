@@ -8,6 +8,7 @@ import { API_ENDPOINTS } from "@/lib/api-config";
 import { AiLoader } from "@/components/AiLoader";
 import type { Profile } from "@/lib/profile-store";
 import type { Company, WorkEntry } from "@/lib/work-db";
+import { loadSavedResumes, type SavedResume } from "@/lib/saved-resume-store";
 
 type ParsedResponse = {
   profile?: Profile;
@@ -18,11 +19,14 @@ type ParsedResponse = {
 export function StepStart({
   onNext,
   onParsed,
+  onSavedResume,
 }: {
   onNext: () => void;
   onParsed: (p: Profile, companies: Company[], entries: WorkEntry[], raw: string) => void;
+  onSavedResume: (resume: string) => void;
 }) {
   const [paste, setPaste] = useState("");
+  const [savedResumes] = useState<SavedResume[]>(loadSavedResumes);
   const [fileName, setFileName] = useState("");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
@@ -155,6 +159,29 @@ export function StepStart({
           </Button>
         </Card>
       </div>
+
+      {savedResumes.length > 0 && (
+        <section className="space-y-4" aria-labelledby="saved-resumes-start-title" data-testid="saved-resume-option">
+          <div>
+            <h2 id="saved-resumes-start-title" className="text-2xl font-semibold tracking-tight">Continue with a saved resume</h2>
+            <p className="mt-2 text-muted-foreground">Open a previous version to review or tailor it for a new role.</p>
+          </div>
+          <div className="grid gap-4 md:grid-cols-2">
+            {savedResumes.map((saved) => (
+              <Card key={saved.id} className="flex flex-col rounded-panel border-border/70 p-5 shadow-none">
+                <div className="flex-1">
+                  <h3 className="font-semibold">{saved.title}</h3>
+                  <p className="mt-1 text-xs text-muted-foreground">Saved {new Date(saved.createdAt).toLocaleDateString()}</p>
+                  <p className="mt-4 line-clamp-3 whitespace-pre-wrap font-mono text-xs leading-relaxed text-muted-foreground">{saved.text}</p>
+                </div>
+                <Button type="button" variant="outline" className="mt-5 w-full rounded-pill" onClick={() => onSavedResume(saved.text)}>
+                  Open saved resume ↗
+                </Button>
+              </Card>
+            ))}
+          </div>
+        </section>
+      )}
     </div>
   );
 }

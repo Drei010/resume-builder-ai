@@ -84,6 +84,19 @@ All colors MUST be HSL.
     background: hsl(var(--primary) / 0.2);
   }
 
+  @keyframes work-library-up {
+    from { transform: translateY(0); }
+    to { transform: translateY(-50%); }
+  }
+
+  @keyframes work-library-down {
+    from { transform: translateY(-50%); }
+    to { transform: translateY(0); }
+  }
+
+  .work-library-track-up { animation: work-library-up 58s linear infinite; }
+  .work-library-track-down { animation: work-library-down 63s linear infinite; }
+
   @media (prefers-reduced-motion: reduce) {
     html {
       scroll-behavior: auto;

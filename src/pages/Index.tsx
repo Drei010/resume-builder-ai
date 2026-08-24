@@ -16,6 +16,8 @@ import { downloadDocx, downloadPDF, downloadTxt } from "@/lib/resume-export";
 import { WorkDatabaseSection } from "@/components/WorkDatabaseSection";
 import { AppHeader } from "@/components/AppHeader";
 import { SavedResumesSection } from "@/components/SavedResumesSection";
+import { useGsap } from "@/hooks/use-gsap";
+import gsap from "gsap";
 
 const Index = () => {
   const navigate = useNavigate();
@@ -26,6 +28,16 @@ const Index = () => {
   const [resume, setResume] = useState("");
   const [isGenerating, setIsGenerating] = useState(false);
   const [downloadFormat, setDownloadFormat] = useState<"pdf" | "docx" | "txt">("pdf");
+  const motionRef = useGsap<HTMLElement>((root, reducedMotion) => {
+    if (reducedMotion) return;
+    const hero = root.querySelector<HTMLElement>("[data-motion-hero]");
+    const heroItems = hero?.querySelectorAll<HTMLElement>("[data-motion-item]");
+    if (heroItems?.length) gsap.from(heroItems, { y: 22, opacity: 0, duration: 0.65, stagger: 0.08, ease: "power3.out" });
+    root.querySelectorAll<HTMLElement>("[data-motion-section]").forEach((section) => {
+      const items = section.querySelectorAll<HTMLElement>("[data-motion-item]");
+      if (items.length) gsap.from(items, { y: 24, opacity: 0, duration: 0.55, stagger: 0.07, ease: "power3.out", scrollTrigger: { trigger: section, start: "top 82%", once: true } });
+    });
+  }, []);
 
   useEffect(() => {
     document.documentElement.lang = i18n.language;
@@ -89,14 +101,14 @@ const Index = () => {
         }
       />
 
-      <main id="top">
+      <main id="top" ref={motionRef}>
         {/* Hero */}
-        <section className="mx-auto max-w-content px-4 pb-24 pt-24 text-center sm:px-6 sm:pb-32 sm:pt-36 lg:pt-48">
-          <h1 className="mx-auto max-w-4xl text-hero font-semibold text-balance">
+        <section data-motion-hero className="mx-auto max-w-content px-4 pb-24 pt-24 text-center sm:px-6 sm:pb-32 sm:pt-36 lg:pt-48">
+          <h1 data-motion-item className="mx-auto max-w-4xl text-hero font-semibold text-balance">
             <span>{t("landing.title")}</span> <span className="text-primary">{t("landing.highlight")}</span>
           </h1>
-          <p className="mx-auto mt-7 max-w-2xl text-lg text-muted-foreground sm:text-xl">{t("landing.description")}</p>
-          <Button onClick={() => navigate("/create")} size="lg" className="mt-9 min-h-12 rounded-pill px-7">
+          <p data-motion-item className="mx-auto mt-7 max-w-2xl text-lg text-muted-foreground sm:text-xl">{t("landing.description")}</p>
+          <Button data-motion-item onClick={() => navigate("/create")} size="lg" className="mt-9 min-h-12 rounded-pill px-7">
             {t("landing.button")} <span aria-hidden="true">↗</span>
           </Button>
         </section>
@@ -106,12 +118,12 @@ const Index = () => {
         <SavedResumesSection />
 
         {/* Highlights — clean text layout, no icon cards */}
-        <section id="highlights" className="bg-secondary/70 px-4 py-20 sm:px-6 sm:py-28">
+        <section id="highlights" data-motion-section className="bg-secondary/70 px-4 py-20 sm:px-6 sm:py-28">
           <div className="mx-auto max-w-wide">
-            <h2 className="max-w-3xl text-section">{t("landing.highlightsTitle")}</h2>
+            <h2 data-motion-item className="max-w-3xl text-section">{t("landing.highlightsTitle")}</h2>
             <div className="mt-12 grid gap-x-12 gap-y-10 md:grid-cols-3">
               {(["aiPowered", "atsFriendly", "instantDownload"] as const).map((key) => (
-                <div key={key}>
+                <div key={key} data-motion-item>
                   <h3 className="text-xl font-semibold tracking-tight">{t(`features.${key}.title`)}</h3>
                   <p className="mt-3 text-muted-foreground">{t(`features.${key}.description`)}</p>
                 </div>
@@ -121,12 +133,12 @@ const Index = () => {
         </section>
 
         {/* Closer look — numbered steps with distinct descriptions */}
-        <section id="closer-look" className="px-4 py-20 sm:px-6 sm:py-32">
+        <section id="closer-look" data-motion-section className="px-4 py-20 sm:px-6 sm:py-32">
           <div className="mx-auto max-w-content">
-            <h2 className="max-w-3xl text-section">{t("landing.closerTitle")}</h2>
+            <h2 data-motion-item className="max-w-3xl text-section">{t("landing.closerTitle")}</h2>
             <div className="mt-14 divide-y divide-border border-y border-border">
               {(t("landing.closerItems", { returnObjects: true }) as string[]).map((title, index) => (
-                <div key={title} className="grid gap-4 py-8 sm:grid-cols-[80px_1fr] sm:py-10">
+                <div key={title} data-motion-item className="grid gap-4 py-8 sm:grid-cols-[80px_1fr] sm:py-10">
                   <span className="text-sm font-semibold tabular-nums text-primary">{String(index + 1).padStart(2, "0")}</span>
                   <div>
                     <h3 className="text-xl font-semibold tracking-tight">{title}</h3>
@@ -141,12 +153,12 @@ const Index = () => {
         </section>
 
         {/* Builder */}
-        <div ref={toolRef} id="tool" className="scroll-mt-20 bg-secondary/70">
+        <div ref={toolRef} id="tool" data-motion-section className="scroll-mt-20 bg-secondary/70">
           <div className="container mx-auto max-w-6xl px-4 py-16 sm:px-6 sm:py-24">
-            <h2 className="mb-10 text-section">{t("landing.toolTitle")}</h2>
+            <h2 data-motion-item className="mb-10 text-section">{t("landing.toolTitle")}</h2>
             <div className="grid gap-8 lg:grid-cols-2">
               {/* Input */}
-              <Card className="rounded-panel border-border/70 bg-card p-5 shadow-md">
+              <Card data-motion-item className="rounded-panel border-border/70 bg-card p-5 shadow-md">
                 <h3 className="mb-4 text-2xl font-semibold tracking-tight">{t("input.label")}</h3>
                 <Textarea
                   ref={jobInfoRef}

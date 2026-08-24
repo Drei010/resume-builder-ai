@@ -1,4 +1,6 @@
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
+import gsap from "gsap";
+import { useGsap } from "@/hooks/use-gsap";
 import { Link } from "react-router-dom";
 import { AppHeader } from "@/components/AppHeader";
 import { WizardNav } from "@/components/wizard/WizardNav";
@@ -21,6 +23,14 @@ export default function Create() {
   const [jobDescription, setJobDescription] = useState("");
   const [saved, setSaved] = useState<SavedJD[]>(loadSavedJDs);
   const [resume, setResume] = useState("");
+  const previousStep = useRef(step);
+  const direction = step >= previousStep.current ? 1 : -1;
+  const stepMotionRef = useGsap<HTMLElement>((root, prefersReducedMotion) => {
+    if (prefersReducedMotion) { gsap.set(root, { clearProps: "all" }); return; }
+    gsap.fromTo(root, { x: direction * 20, opacity: 0 }, { x: 0, opacity: 1, duration: 0.35, ease: "power3.out" });
+  }, [step]);
+
+  useEffect(() => { previousStep.current = step; }, [step]);
 
   const next = () => {
     saveProfile(profile);
@@ -48,7 +58,7 @@ export default function Create() {
       <WizardProgressBar step={step} />
       <WizardNav step={step} onBack={back} />
 
-      <main className="mx-auto max-w-5xl px-5 py-12 sm:px-8">
+      <main ref={stepMotionRef} className="mx-auto max-w-5xl px-5 py-12 sm:px-8">
         {step === 0 && (
           <StepStart
             onNext={next}
@@ -56,6 +66,10 @@ export default function Create() {
               setProfile({ ...defaultProfile, ...p });
               updateCompanies(c);
               updateEntries(e);
+            }}
+            onSavedResume={(savedResume) => {
+              setResume(savedResume);
+              setStep(5);
             }}
           />
         )}

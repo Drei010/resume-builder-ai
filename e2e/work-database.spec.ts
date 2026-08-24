@@ -6,16 +6,14 @@ const company = {
   jobTitle: "Automation Developer",
 };
 
-const tailoredResume = "WORK EXPERIENCE\nAutomation Developer | Acme Systems                 October 2024 – Present\nCreated an automation that reduced FTE workload by 2 people.";
-
-test.describe("work database tailoring", () => {
+test.describe("work database", () => {
   test.beforeEach(async ({ page }) => {
     await page.goto("/");
     await page.evaluate(() => localStorage.clear());
     await page.reload();
   });
 
-  test("collage expands, persists a company and task, then tailors and downloads", async ({ page }) => {
+  test("collage expands and persists a company and task", async ({ page }) => {
     await expect(page.getByTestId("modify-work-tasks")).toBeVisible();
     await page.locator("#work-database").screenshot({ path: "e2e/screenshots/views/work-collage-light-stacked.png" });
     await page.getByTestId("modify-work-tasks").click();
@@ -34,18 +32,6 @@ test.describe("work database tailoring", () => {
 
     await expect(page.getByText("October 2024")).toBeVisible();
     await expect(page.getByText(company.name)).toBeVisible();
-
-    await page.getByLabel("Job description").fill("We need an automation developer who can build workflow automation and reduce operational workload.");
-    await page.route("**/api/tailor-resume", async (route) => {
-      await route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ resume: tailoredResume }) });
-    });
-    await page.getByTestId("generate-tailored-resume").click();
-    await expect(page.getByLabel("Tailored resume preview")).toHaveValue(tailoredResume);
-
-    const downloadPromise = page.waitForEvent("download");
-    await page.getByRole("button", { name: "Download tailored resume" }).click();
-    const download = await downloadPromise;
-    expect(download.suggestedFilename()).toBe("resume.pdf");
 
     await page.reload();
     await page.getByTestId("modify-work-tasks").click();
