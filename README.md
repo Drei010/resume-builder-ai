@@ -1,257 +1,116 @@
-# TalentEdge AI - Resume Builder
+# TalentEdge AI
 
-An intelligent, AI-powered resume builder that generates professional resumes based on job descriptions. Built with modern web technologies and deployed on Vercel.
+TalentEdge AI turns unstructured work experience into a polished, ATS-friendly resume. Add your profile, work history, and a target job description, then review and download a tailored resume.
 
-## Features
+## What it does
 
-✨ **AI-Powered Resume Generation**
+- Start from scratch, upload an existing resume, or paste LinkedIn profile content.
+- Organize companies, roles, dates, and work accomplishments.
+- Tailor resume content to a specific job description with AI.
+- Edit the generated resume and LaTeX source before exporting.
+- Save resumes and job descriptions in the browser for later use.
+- Download resumes as PDF, DOCX, or TXT.
+- Use the interface in English, Spanish, or Tagalog.
+- Switch between light and dark themes on desktop or mobile.
 
-- Generate tailored resumes from job descriptions using Google Gemini or OpenAI
-- Automatic fallback between AI providers for reliability
-- Editable preview with real-time updates
-- Add more details to expand generated content
+## Tech stack
 
-📄 **Multiple Export Formats**
+- React, TypeScript, and Vite
+- Tailwind CSS and shadcn/ui
+- React Router for page navigation
+- Express for local API routes
+- Vercel serverless functions for deployment
+- OpenAI for resume generation and tailoring
+- `jsPDF` and `docx` for downloads
 
-- PDF export with professional styling
-- DOCX (Word) export for easy editing
-- TXT export for plain text submissions
+## Getting started
 
-🌐 **Internationalization**
+### Requirements
 
-- Support for multiple languages (English, Spanish, Tagalog)
-- Language preference saved to browser storage
-- Easy to add more languages
+- Node.js 18 or newer
+- npm
+- An OpenAI API key
 
-🎨 **Theme Support**
-
-- Dark and light mode with smooth transitions
-- Automatic theme selection based on time of day (light: 6 AM - 6 PM, dark: 6 PM - 6 AM)
-- Manual toggle with persistent user preference
-
-📱 **Responsive Design**
-
-- Mobile-friendly interface
-- Works seamlessly across all devices
-- Optimized for both desktop and tablet
-
-## Technology Stack
-
-**Frontend:**
-
-- React 18 with TypeScript
-- Vite for build tooling and dev server
-- Tailwind CSS for styling
-- shadcn/ui component library
-- Lucide React icons
-- i18next for internationalization
-- Sonner for toast notifications
-- jsPDF, docx, file-saver for exports
-
-**Backend:**
-
-- Node.js with Express (local development)
-- Vercel Serverless Functions (production)
-- Support for Google Gemini 2.0 Flash and OpenAI GPT-4o
-- Environment-based configuration
-
-**Deployment:**
-
-- Vercel for hosting and serverless functions
-- Vercel Analytics integration
-
-## Getting Started
-
-### Prerequisites
-
-- Node.js 16+ and npm (or bun)
-- Git for version control
-
-### Local Development
-
-1. **Clone the repository:**
-
-```bash
-git clone <repository-url>
-cd resume-builder-ai
-```
-
-2. **Install dependencies:**
+### Install
 
 ```bash
 npm install
 ```
 
-3. **Set up environment variables:**
-
 Create a `.env` file in the project root:
 
 ```env
-OPENAI_API_KEY=your_openai_api_key_here
-GEMINI_API_KEY=your_gemini_api_key_here
+OPENAI_API_KEY=your_openai_api_key
+GEMINI_API_KEY=your_gemini_api_key
 ```
 
-4. **Run development servers:**
+`OPENAI_API_KEY` is required for the current generation and tailoring routes. The Gemini key is supported by the server configuration for Gemini-based generation.
 
-To run both frontend and backend concurrently:
+### Run locally
+
+Run the frontend and API server together:
 
 ```bash
 npm run dev:all
 ```
 
-Or run them separately in different terminals:
+Or run them separately:
 
-- Frontend (Vite): `npm run dev` (http://localhost:8080)
-- Backend (Express): `npm run server` (http://localhost:3001)
-
-### Available Scripts
-
-- `npm run dev` - Start Vite dev server
-- `npm run server` - Start Express backend server
-- `npm run dev:all` - Start both frontend and backend concurrently
-- `npm run build` - Build for production
-- `npm run preview` - Preview production build locally
-
-## Project Structure
-
+```bash
+npm run dev       # Vite app at http://localhost:8080
+npm run server    # Express API at http://localhost:3001
 ```
+
+The Vite development server proxies `/api` requests to the Express server.
+
+## Main workflow
+
+1. Open **Create**.
+2. Start fresh, upload a resume, or paste LinkedIn profile content.
+3. Review and complete your profile and work history.
+4. Add the job description you are targeting.
+5. Let AI generate a tailored resume.
+6. Edit the preview, save it, or download it as PDF, DOCX, or TXT.
+
+The landing page is available at `/`. The guided builder is available at `/create`, and the resume-from-story page is available at `/resume-from-your-story`.
+
+## Useful commands
+
+```bash
+npm run dev       # Start the Vite development server
+npm run server    # Start the local Express API
+npm run dev:all   # Start both servers
+npm run build     # Create a production build
+npm run preview   # Preview the production build
+npm run lint      # Run ESLint
+npm run test:e2e  # Run Playwright end-to-end tests
+```
+
+## Project structure
+
+```text
 src/
-├── pages/              # Main application pages
-│   └── Index.tsx       # Resume builder UI
-├── components/         # React components
-│   ├── NavLink.tsx
-│   └── ui/            # shadcn/ui components
-├── contexts/          # React context providers
-│   └── ThemeContext.tsx
-├── hooks/             # Custom React hooks
-├── integrations/      # Third-party integrations
-├── i18n/              # Internationalization setup
-│   └── locales/       # Translation files
-├── lib/               # Utility functions and constants
-│   ├── api-config.ts  # API endpoint configuration
-│   ├── constants.ts   # App constants
-│   └── utils.ts       # Helper utilities
+├── components/       # Shared UI and resume builder components
+├── components/wizard # Guided resume creation steps
+├── contexts/         # Theme state
+├── i18n/             # Language configuration and translations
+├── lib/              # API, storage, parsing, and export utilities
+└── pages/            # Landing, create, and resume-from-story pages
 
-api/
-├── generate-resume.ts   # Vercel wrapper for the shared handler
-└── tailor-resume.ts     # Vercel wrapper for JD tailoring
-
-public/
-└── favicon.svg       # Custom app icon
+srv/                  # Shared Express/serverless handlers
+api/                  # Vercel API function wrappers
+public/               # Static assets
 ```
 
-## Configuration
+## API routes
 
-### Customizing Social Links
-
-Edit `src/lib/constants.ts` to update social media links:
-
-```typescript
-export const SOCIAL_LINKS = {
-  linkedin: "https://linkedin.com/in/yourprofile",
-  github: "https://github.com/yourprofile",
-  email: "your.email@example.com",
-};
-```
-
-### Adding Languages
-
-1. Create a new translation file in `src/i18n/locales/` (e.g., `de.json` for German)
-2. Update `src/i18n/config.ts` to include the new language
-3. Add the language option to the language selector in your component
+- `POST /api/generate-resume` — Generate a resume from job information.
+- `POST /api/parse-resume` — Parse uploaded or pasted resume content.
+- `POST /api/tailor-resume` — Tailor work history to a job description.
+- `GET /health` — Check that the local API server is running.
 
 ## Deployment
 
-### Deploy to Vercel
+The app can be deployed to Vercel. Add the required API keys under the project’s environment variables, deploy the repository, and verify the API routes in the deployment logs.
 
-1. **Push to GitHub:**
-
-```bash
-git push origin main
-```
-
-2. **Connect to Vercel:**
-
-   - Go to [vercel.com](https://vercel.com)
-   - Import your GitHub repository
-   - Vercel will auto-detect the project settings
-
-3. **Set Environment Variables:**
-
-   - In Vercel Dashboard → Settings → Environment Variables
-   - Add `OPENAI_API_KEY` and `GEMINI_API_KEY`
-   - Redeploy after adding variables
-
-4. **Custom Domain (Optional):**
-   - Navigate to Settings → Domains
-   - Add your custom domain
-
-See [DEPLOYMENT.md](./DEPLOYMENT.md) for detailed deployment instructions.
-
-## How to Use
-
-1. **Enter job description:** Paste the job description in the input field
-2. **Select AI provider:** Choose between OpenAI or Gemini (OpenAI is default)
-3. **Generate resume:** Click "Generate Resume" to create tailored content
-4. **Edit preview:** Modify the generated resume directly in the preview area
-5. **Export:** Choose your preferred format (PDF, DOCX, or TXT) and download
-6. **Add details:** Use "Add More Details" to expand sections as needed
-
-## API
-
-### POST `/api/generate-resume`
-
-Generates a resume based on job description.
-
-**Request Body:**
-
-```json
-{
-  "jobDescription": "string",
-  "provider": "openai" | "gemini"
-}
-```
-
-**Response:**
-
-```json
-{
-  "resume": "string",
-  "provider": "string"
-}
-```
-
-## Troubleshooting
-
-### API calls failing locally?
-
-- Ensure the Express server is running: `npm run server`
-- Check that the Vite proxy is configured in `vite.config.ts`
-- Verify environment variables are set in `.env`
-
-### Build errors?
-
-- Clear node_modules: `rm -r node_modules && npm install`
-- Clear build cache: `npm run build` with a fresh node_modules
-
-### Vercel deployment issues?
-
-- Verify environment variables are set in Vercel dashboard
-- Check deployment logs in Vercel dashboard
-- Ensure all required API keys are configured
-
-## Contributing
-
-Contributions are welcome! Feel free to open issues and submit pull requests.
-
-## License
-
-This project is licensed under the MIT License - see the LICENSE file for details.
-
-## Support
-
-For issues and questions, please open a GitHub issue or contact the maintainers.
-
----
-
-**Note:** Make sure to customize the social links and contact information in `src/lib/constants.ts` before deploying to production.
+Never commit `.env` files or API keys to the repository.
