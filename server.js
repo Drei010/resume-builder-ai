@@ -2,6 +2,7 @@ import express from "express";
 import cors from "cors";
 import dotenv from "dotenv";
 import { generateResume } from "./srv/index.ts";
+import { tailorResume } from "./srv/routes/tailorResume.ts";
 
 dotenv.config();
 
@@ -12,8 +13,9 @@ const PORT = process.env.PORT || 3001;
 app.use(cors());
 app.use(express.json());
 
-// Use the shared resume generation handler
+// Use the shared resume generation handlers
 app.post("/api/generate-resume", generateResume);
+app.post("/api/tailor-resume", tailorResume);
 
 // Health check endpoint
 app.get("/health", (req, res) => {

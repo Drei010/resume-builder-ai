@@ -133,7 +133,8 @@ src/
 │   └── utils.ts       # Helper utilities
 
 api/
-├── generate-resume.js # Unified API handler (Express + Vercel)
+├── generate-resume.ts   # Vercel wrapper for the shared handler
+└── tailor-resume.ts     # Vercel wrapper for JD tailoring
 
 public/
 └── favicon.svg       # Custom app icon

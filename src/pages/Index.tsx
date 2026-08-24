@@ -24,9 +24,8 @@ import { useTheme } from "@/contexts/ThemeContext";
 import { useTranslation } from "react-i18next";
 import { SOCIAL_LINKS } from "@/lib/constants";
 import { API_ENDPOINTS } from "@/lib/api-config";
-import jsPDF from "jspdf";
-import { Document, Packer, Paragraph } from "docx";
-import { saveAs } from "file-saver";
+import { downloadDocx, downloadPDF, downloadTxt } from "@/lib/resume-export";
+import { WorkDatabaseSection } from "@/components/WorkDatabaseSection";
 
 const Index = () => {
   const { theme, toggleTheme } = useTheme();
@@ -103,11 +102,11 @@ const Index = () => {
 
     try {
       if (downloadFormat === "pdf") {
-        downloadPDF();
+        downloadPDF(resume);
       } else if (downloadFormat === "docx") {
-        await downloadDocx();
+        await downloadDocx(resume);
       } else if (downloadFormat === "txt") {
-        downloadTxt();
+        downloadTxt(resume);
       }
     } catch (error) {
       console.error("Error downloading resume:", error);
@@ -115,58 +114,6 @@ const Index = () => {
     }
   };
 
-  const downloadPDF = () => {
-    try {
-      const doc = new jsPDF();
-      const pageWidth = doc.internal.pageSize.getWidth();
-      const pageHeight = doc.internal.pageSize.getHeight();
-      const margin = 20;
-      const maxWidth = pageWidth - margin * 2;
-
-      const lines = doc.splitTextToSize(resume, maxWidth);
-      let y = margin;
-      const lineHeight = 7;
-
-      lines.forEach((line: string) => {
-        if (y + lineHeight > pageHeight - margin) {
-          doc.addPage();
-          y = margin;
-        }
-        doc.text(line, margin, y);
-        y += lineHeight;
-      });
-
-      doc.save("resume.pdf");
-      toast.success(t("messages.downloadPdf"));
-    } catch (error) {
-      console.error("Error generating PDF:", error);
-      throw error;
-    }
-  };
-
-  const downloadDocx = async () => {
-    try {
-      const paragraphs = resume.split("\n").map((line) => new Paragraph(line));
-      const doc = new Document({ sections: [{ children: paragraphs }] });
-      const blob = await Packer.toBlob(doc);
-      saveAs(blob, "resume.docx");
-      toast.success(t("messages.downloadDocx"));
-    } catch (error) {
-      console.error("Error generating DOCX:", error);
-      throw error;
-    }
-  };
-
-  const downloadTxt = () => {
-    try {
-      const blob = new Blob([resume], { type: "text/plain" });
-      saveAs(blob, "resume.txt");
-      toast.success(t("messages.downloadTxt"));
-    } catch (error) {
-      console.error("Error generating TXT:", error);
-      throw error;
-    }
-  };
 
   return (
     <div className="min-h-screen bg-background text-foreground">
@@ -220,6 +167,8 @@ const Index = () => {
           <p className="mx-auto mt-7 max-w-2xl text-lg text-muted-foreground sm:text-xl">{t("landing.description")}</p>
           <Button onClick={focusTool} size="lg" className="mt-9 min-h-12 rounded-pill px-7">{t("landing.button")} <span aria-hidden="true">↗</span></Button>
         </section>
+
+        <WorkDatabaseSection />
 
         <section id="highlights" className="bg-secondary/70 px-4 py-20 sm:px-6 sm:py-28">
           <div className="mx-auto max-w-wide">
